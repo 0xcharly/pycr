@@ -1,4 +1,4 @@
-cr
-==
+PyCR
+====
 
-Gerrit Code Review - Command Line Interface to the REST API v2.8
+A Command-Line Interface to Gerrit Code Review v2.8
