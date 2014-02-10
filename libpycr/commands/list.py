@@ -26,11 +26,16 @@ def parse_command_line(arguments):
         description='display list of change(s)')
 
     parser.add_argument(
-        '-o', '--owner', default='self', help='the owner of the changes')
+        '--owner', default='self', help='the owner of the changes')
     parser.add_argument(
-        '-s', '--status', default='open', help='the status of the changes')
+        '--status', default='open', help='the status of the changes')
 
     cmdline = parser.parse_args(arguments)
+
+    if cmdline.status not in Gerrit.get_all_statuses():
+        fail('argument --status: invalid choice "%s" (choose from %s)' %
+             (cmdline.status,
+              ', '.join(["'%s'" % st for st in Gerrit.get_all_statuses()])))
 
     # Fetch changes details
     return cmdline.owner, cmdline.status

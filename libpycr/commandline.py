@@ -43,7 +43,8 @@ def build_cmdline_parser():
     # If provided, override the configuration file's value(s) and reset the
     # password to None (the user will be prompted the password at runtime).
     parser.add_argument(
-        '--username', default=None, help='Gerrit Code Review authentication')
+        '--username', default=None,
+        help='Gerrit Code Review HTTP digest authentication')
 
     # Hidden argument to select a custom Pygments formatter.
     # This is not a very user-friendly feature so do not litter the usage
@@ -64,17 +65,18 @@ def build_cmdline_parser():
         'command', nargs='?', help='display help for that command')
 
     # LIST command
-    cl_list = actions.add_parser('list', help='list change(s)')
+    cl_list = actions.add_parser('list', add_help=False, help='list change(s)')
     cl_list.set_defaults(command=list_command.main)
 
     # SHOW command
     cl_show = actions.add_parser(
-        'show', help='display code reviews for change(s)')
+        'show', add_help=False, help='display code reviews for change(s)')
     cl_show.set_defaults(command=show.main)
 
     # ASSIGN command
     cl_assign = actions.add_parser(
-        'assign', prefix_chars='-+', help='assign reviewer to change(s)')
+        'assign', add_help=False, prefix_chars='-+',
+        help='add/delete reviewer to/from change(s)')
     cl_assign.set_defaults(command=assign.main)
 
     return parser

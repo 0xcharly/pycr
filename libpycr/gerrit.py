@@ -125,6 +125,19 @@ class Gerrit(object):
     log = logging.getLogger(__name__)
 
     @staticmethod
+    def get_all_statuses():
+        """
+        Return the list of existing Gerrit Code Review statuses.
+
+        RETURNS
+            a iterable object of string
+        """
+
+        # List of valid Gerrit Code Review statuses
+        return ('open', 'merged', 'abandoned', 'closed', 'reviewed',
+                'submitted')
+
+    @staticmethod
     def get_changes_query_endpoint():
         """
         Return an URL to the Gerrit Code Review server.
