@@ -9,6 +9,7 @@ import sys
 
 from libpycr import get_version
 from libpycr.commands import assign, show
+from libpycr.commands import list as list_command
 from libpycr.http import RequestFactory
 from libpycr.utils.output import Formatter
 
@@ -66,6 +67,10 @@ def build_cmdline_parser():
         'help', help='display help information about %(prog)s sub-commands')
     cl_help.add_argument(
         'command', nargs='?', help='display help for that command')
+
+    # LIST command
+    cl_list = actions.add_parser('list', help='list change(s)')
+    cl_list.set_defaults(command=list_command.main)
 
     # SHOW command
     cl_show = actions.add_parser(

@@ -125,6 +125,17 @@ class Gerrit(object):
     log = logging.getLogger(__name__)
 
     @staticmethod
+    def get_changes_query_endpoint():
+        """
+        Return an URL to the Gerrit Code Review server.
+
+        RETURNS
+            the URL as a string
+        """
+
+        return '%s/changes/' % RequestFactory.get_remote_base_url()
+
+    @staticmethod
     def get_changes_endpoint(change_id, detailed=False):
         """
         Return an URL to the Gerrit Code Review server for the given change.
@@ -139,8 +150,8 @@ class Gerrit(object):
             the URL as a string
         """
 
-        return '%s/changes/%s%s' % (RequestFactory.get_remote_base_url(),
-                                    change_id, '/detail' if detailed else '')
+        return '%s%s%s' % (Gerrit.get_changes_query_endpoint(),
+                           change_id, '/detail' if detailed else '')
 
     @staticmethod
     def get_reviewers_endpoint(change_id):
@@ -175,6 +186,77 @@ class Gerrit(object):
         """
 
         return '%s/%s' % (Gerrit.get_reviewers_endpoint(change_id), account_id)
+
+    @staticmethod
+    def forge_search_query(status=None, owner=None, reviewer=None):
+        """
+        Create a search query compatible with Gerrit Code Review queries.
+
+        PARAMETERS
+            status: the status of changes
+            owner: the owner of changes
+            reviewer: the reviewer of changes
+
+        RETURNS
+            the query as a string
+        """
+
+        buf = []
+
+        if status is not None:
+            buf.append('status:%s' % status)
+
+        if owner is not None:
+            buf.append('owner:%s' % owner)
+
+        if reviewer is not None:
+            buf.append('reviewer:%s' % reviewer)
+
+        return '+'.join(buf)
+
+    @classmethod
+    def list_changes(cls, status='open', owner='self'):
+        """
+        Send a GET request to the Gerrit Code Review server to fetch the list
+        of changes with the given STATUS and from the given OWNER.
+
+        PARAMETERS
+            status: the status of the change (open, merged, ...)
+            owner: the account_id of the owner of the changes
+
+        RETURNS
+            a list of ChangeInfo
+
+        RAISES
+            NoSuchChangeError if no change match the query criterion
+            PyCRError on any error
+        """
+
+        cls.log.debug(
+            'Changes lookup with status:%s & owner:%s' % (status, owner))
+
+        try:
+            # NOTE: We can't use the params= parameter of the requests.get
+            # method because this would encode the query string and prevent
+            # Gerrit from parsing it
+
+            endpoint = '%s?q=%s' % (Gerrit.get_changes_query_endpoint(),
+                                    Gerrit.forge_search_query(status=status,
+                                                              owner=owner))
+
+            # DETAILED_ACCOUNTS option ensures that the owner email address is
+            # sent in the response
+            extra_params = {'o': 'DETAILED_ACCOUNTS'}
+
+            _, response = RequestFactory.get(endpoint, params=extra_params)
+
+        except RequestError as why:
+            if why.status_code == 404:
+                raise NoSuchChangeError('no result for query criterion')
+
+            raise PyCRError('cannot fetch change details', why)
+
+        return [ChangeInfo.from_json(c) for c in response]
 
     @classmethod
     def get_change(cls, change_id):
