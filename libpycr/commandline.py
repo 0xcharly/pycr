@@ -45,11 +45,6 @@ def build_cmdline_parser():
     parser.add_argument(
         '--username', default=None, help='Gerrit Code Review authentication')
 
-    # Disable colored output (using the internal formatter mechanism)
-    parser.add_argument(
-        '--no-color', default=False, action='store_true',
-        help='disable colored output')
-
     # Hidden argument to select a custom Pygments formatter.
     # This is not a very user-friendly feature so do not litter the usage
     # message with it.
@@ -147,11 +142,5 @@ def parse_command_line(argv):
         # Reset the pair (username, password) if --username is supplied on the
         # command line. The user will be prompted its password.
         RequestFactory.set_auth_token(cmdline.username, None)
-
-    # Configure the program output
-    if cmdline.no_color:
-        Formatter.set_formatter(Formatter.NO_COLOR)
-    else:
-        Formatter.set_formatter(cmdline.formatter)
 
     return cmdline.command, remaining

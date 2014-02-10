@@ -48,8 +48,11 @@ class OutputStyle(Style):
 class Formatter(object):
     """Output formatter."""
 
-    formatter = None
+    # The formatter name for disabled colored output
     NO_COLOR = 'null'
+
+    # The formatter to use; defaults to "null" (no color)
+    formatter = get_formatter_by_name(NO_COLOR, style=OutputStyle)
 
     @staticmethod
     def get_all():
@@ -63,7 +66,7 @@ class Formatter(object):
         return get_all_formatters()
 
     @classmethod
-    def set_formatter(cls, formatter_name, style=OutputStyle):
+    def set_formatter(cls, formatter_name='terminal256', style=OutputStyle):
         """
         Set the formatter to use for the output.
 

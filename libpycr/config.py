@@ -3,10 +3,12 @@ This module manipulates the configuration files for this project.
 """
 
 import os
+import sys
 
 from ConfigParser import ParsingError, SafeConfigParser
 
 from libpycr.http import RequestFactory
+from libpycr.utils.output import Formatter
 from libpycr.utils.system import fail, warn, reverse_find_file
 
 
@@ -15,11 +17,18 @@ from libpycr.utils.system import fail, warn, reverse_find_file
 class Config(object):
     """Script configuration."""
 
-    SECTION = 'gerrit'
+    # The configuration file name
+    FILENAME = 'gitreview'
 
-    FILENAME = '.gitreview'
-    GLOBAL = os.path.expanduser('~/%s' % FILENAME)
+    # Windows:   C:\etc\gitreview
+    # Otherwise: /etc/gitreview
+    SYSTEM = os.path.join(
+        os.path.splitdrive(sys.executable)[0] or '/', 'etc', FILENAME)
 
+    # $HOME/.gitreview
+    GLOBAL = os.path.expanduser('~/.%s' % FILENAME)
+
+    # Gerrit Code Review remote server host
     host = None
 
     @classmethod
@@ -45,22 +54,8 @@ class Config(object):
         except ParsingError as why:
             fail('failed to parse configuration: %s' % config, why)
 
-        if not parser.has_section(Config.SECTION):
-            fail('missing section [%s]' % Config.SECTION)
-
-        # Configure the HTTP request engine
-        if parser.has_option(Config.SECTION, 'host'):
-            RequestFactory.set_host(parser.get(Config.SECTION, 'host'))
-
-        if parser.has_option(Config.SECTION, 'username'):
-            username = parser.get(Config.SECTION, 'username')
-
-            if parser.has_option(Config.SECTION, 'password'):
-                password = parser.get(Config.SECTION, 'password')
-            else:
-                password = None
-
-            RequestFactory.set_auth_token(username, password)
+        cls._read_core_config(parser)
+        cls._read_gerrit_config(parser)
 
     @staticmethod
     def load_all():
@@ -68,9 +63,65 @@ class Config(object):
         Load all configuration files available.
         """
 
+        Config.load(Config.SYSTEM, quiet=True)
         Config.load(Config.GLOBAL, quiet=True)
 
-        local = reverse_find_file(Config.FILENAME, ignores=[Config.GLOBAL])
+        local = reverse_find_file('.%s' % Config.FILENAME,
+                                  ignores=[Config.GLOBAL])
 
         if local is not None:
             Config.load(local)
+
+    @classmethod
+    def _read_gerrit_config(cls, config):
+        """
+        Read the configuration for the [gerrit] section.
+
+        PARAMETERS
+            config: ConfigParser.SafeConfigParser
+        """
+
+        section = 'gerrit'
+
+        if not config.has_section(section):
+            # This section is not mandatory for a given config file
+            return
+
+        # Configure the HTTP request engine
+        if config.has_option(section, 'host'):
+            RequestFactory.set_host(config.get(section, 'host'))
+
+        if config.has_option(section, 'username'):
+            username = config.get(section, 'username')
+
+            if config.has_option(section, 'password'):
+                password = config.get(section, 'password')
+            else:
+                password = None
+
+            RequestFactory.set_auth_token(username, password)
+
+    @classmethod
+    def _read_core_config(cls, config):
+        """
+        Read the configuration for the [cl] section.
+
+        PARAMETERS
+            config: ConfigParser.SafeConfigParser
+        """
+
+        section = 'core'
+
+        if not config.has_section(section):
+            # This section is not mandatory
+            return
+
+        if config.has_option(section, 'color'):
+            color = config.get(section, 'color')
+
+            if color == 'auto':
+                # Use the default style
+                Formatter.set_formatter()
+            else:
+                # Attempt to use the user-declared style
+                Formatter.set_formatter(color)
