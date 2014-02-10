@@ -8,6 +8,7 @@ import logging
 from libpycr.changes import display_change_info
 from libpycr.exceptions import NoSuchChangeError, PyCRError
 from libpycr.gerrit import Gerrit
+from libpycr.pager import Pager
 from libpycr.utils.system import fail
 
 
@@ -64,8 +65,9 @@ def main(arguments):
     except PyCRError as why:
         fail('cannot list changes', why)
 
-    for idx, change in enumerate(changes):
-        if idx:
-            print ''
+    with Pager(command='list'):
+        for idx, change in enumerate(changes):
+            if idx:
+                print ''
 
-        display_change_info(change)
+            display_change_info(change)
