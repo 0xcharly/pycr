@@ -4,6 +4,8 @@ This module contains the input / output formatting routines.
 
 import pygments
 
+from libpycr.config import Config
+
 from pygments.formatters import get_all_formatters, get_formatter_by_name
 from pygments.style import Style
 from pygments.styles import get_style_by_name
@@ -51,8 +53,8 @@ class Formatter(object):
     # The formatter name for disabled colored output
     NO_COLOR = 'null'
 
-    # The formatter to use; defaults to "null" (no color)
-    formatter = get_formatter_by_name(NO_COLOR, style=OutputStyle)
+    # The formatter to use
+    formatter = None
 
     @staticmethod
     def get_all():
@@ -66,16 +68,15 @@ class Formatter(object):
         return get_all_formatters()
 
     @classmethod
-    def set_formatter(cls, formatter_name='terminal256', style=OutputStyle):
+    def set_formatter(cls, formatter_name='terminal256'):
         """
         Set the formatter to use for the output.
 
         PARAMETERS
             formatter_name: the name of the Pygments formatter
-            style: a dictionary of style to use for output
         """
 
-        cls.formatter = get_formatter_by_name(formatter_name, style=style)
+        Config.set('core.formatter', formatter_name)
 
     @classmethod
     def format(cls, tokens):
@@ -88,5 +89,13 @@ class Formatter(object):
         RETURNS
             the formatted string
         """
+
+        if cls.formatter is None:
+            name = Config.get('core.color', Formatter.NO_COLOR)
+
+            if name == 'auto':
+                name = 'terminal256'
+
+            cls.formatter = get_formatter_by_name(name, style=OutputStyle)
 
         return pygments.format(tokens, cls.formatter)

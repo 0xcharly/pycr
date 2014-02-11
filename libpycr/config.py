@@ -7,14 +7,12 @@ import sys
 
 from ConfigParser import ParsingError, SafeConfigParser
 
-from libpycr.http import RequestFactory
-from libpycr.utils.output import Formatter
 from libpycr.utils.system import fail, warn, reverse_find_file
 
 
 # pylint: disable=R0903
 # Disable "Too few public methods"
-class Config(object):
+class Config(dict):
     """Script configuration."""
 
     # The configuration file name
@@ -28,8 +26,8 @@ class Config(object):
     # $HOME/.gitreview
     GLOBAL = os.path.expanduser('~/.%s' % FILENAME)
 
-    # Gerrit Code Review remote server host
-    host = None
+    # Dictionary of configuration keys
+    __config = {}
 
     @classmethod
     def load(cls, filename, quiet=False):
@@ -54,8 +52,7 @@ class Config(object):
         except ParsingError as why:
             fail('failed to parse configuration: %s' % config, why)
 
-        cls._read_core_config(parser)
-        cls._read_gerrit_config(parser)
+        cls._store_config(parser)
 
     @staticmethod
     def load_all():
@@ -73,55 +70,45 @@ class Config(object):
             Config.load(local)
 
     @classmethod
-    def _read_gerrit_config(cls, config):
+    def get(cls, key, default=None):
         """
-        Read the configuration for the [gerrit] section.
+        Return the configuration value associated with KEY, or DEFAULT
+        otherwise.
 
         PARAMETERS
-            config: ConfigParser.SafeConfigParser
+            key: the configuration key
+            default: the default value to return if key is not if the
+                configuration
+
+        RETURNS
+            the value associated with KEY, or DEFAULT
         """
 
-        section = 'gerrit'
-
-        if not config.has_section(section):
-            # This section is not mandatory for a given config file
-            return
-
-        # Configure the HTTP request engine
-        if config.has_option(section, 'host'):
-            RequestFactory.set_host(config.get(section, 'host'))
-
-        if config.has_option(section, 'username'):
-            username = config.get(section, 'username')
-
-            if config.has_option(section, 'password'):
-                password = config.get(section, 'password')
-            else:
-                password = None
-
-            RequestFactory.set_auth_token(username, password)
+        return cls.__config.get(key, default)
 
     @classmethod
-    def _read_core_config(cls, config):
+    def _store_config(cls, config):
         """
-        Read the configuration for the [cl] section.
+        Store each element of the configuration file.
+
+        If the element already exists, this method will override it.
 
         PARAMETERS
             config: ConfigParser.SafeConfigParser
         """
 
-        section = 'core'
+        for section in config.sections():
+            for option, value in config.items(section):
+                cls.__config['%s.%s' % (section, option)] = value
 
-        if not config.has_section(section):
-            # This section is not mandatory
-            return
+    @classmethod
+    def set(cls, key, value):
+        """
+        Create or override an entry in the configuration dictionary.
 
-        if config.has_option(section, 'color'):
-            color = config.get(section, 'color')
+        PARAMETERS
+            key: the key to insert or override
+            value: the value to associate with the key
+        """
 
-            if color == 'auto':
-                # Use the default style
-                Formatter.set_formatter()
-            else:
-                # Attempt to use the user-declared style
-                Formatter.set_formatter(color)
+        cls.__config[key] = value

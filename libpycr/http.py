@@ -7,6 +7,7 @@ import logging
 import json
 import requests
 
+from libpycr.config import Config
 from libpycr.exceptions import RequestError
 from libpycr.utils.system import fail
 
@@ -21,16 +22,6 @@ class RequestFactory(object):
 
     # Logger
     log = logging.getLogger(__name__)
-
-    # Remote
-    host = None
-
-    # Credentials
-    username = None
-    password = None
-
-    # Connection
-    unsecure = False
 
     # HTTP protocol method supported by this application
     GET = ('GET', requests.get)
@@ -51,35 +42,8 @@ class RequestFactory(object):
             password: the account HTTP password
         """
 
-        cls.username = username
-        cls.password = password
-
-    @classmethod
-    def require_auth(cls):
-        """
-        Return True if authentication is required.
-        Check whether cls.username is None.
-
-        RETURNS
-            True if auth required, False otherwise
-        """
-
-        return cls.username is not None
-
-    @classmethod
-    def get_http_digest_auth_token(cls):
-        """
-        Return the HTTPDigestAuth object to use for authentication.
-        Prompt the user if the password is unknown.
-
-        RETURNS
-            requests.auth.HTTPDigestAuth
-        """
-
-        if cls.password is None:
-            cls.password = getpass.getpass()
-
-        return HTTPDigestAuth(cls.username, cls.password)
+        Config.set('gerrit.username', username)
+        Config.set('gerrit.password', password)
 
     @classmethod
     def set_host(cls, host):
@@ -89,7 +53,7 @@ class RequestFactory(object):
             host: the server's host
         """
 
-        cls.host = host
+        Config.set('gerrit.host', host)
 
     @classmethod
     def set_unsecure_connection(cls, unsecure):
@@ -101,7 +65,37 @@ class RequestFactory(object):
             unsecure: True to use HTTP
         """
 
-        cls.unsecure = unsecure
+        Config.set('gerrit.unsecure', unsecure)
+
+    @classmethod
+    def require_auth(cls):
+        """
+        Return True if authentication is required.
+        Check whether cls.username is None.
+
+        RETURNS
+            True if auth required, False otherwise
+        """
+
+        return Config.get('gerrit.username') is not None
+
+    @classmethod
+    def get_http_digest_auth_token(cls):
+        """
+        Return the HTTPDigestAuth object to use for authentication.
+        Prompt the user if the password is unknown.
+
+        RETURNS
+            requests.auth.HTTPDigestAuth
+        """
+
+        username = Config.get('gerrit.username')
+        password = Config.get('gerrit.password')
+
+        if password is None:
+            password = getpass.getpass()
+
+        return HTTPDigestAuth(username, password)
 
     @classmethod
     def get_remote_base_url(cls):
@@ -112,10 +106,11 @@ class RequestFactory(object):
             the Gerrit Code Review server base URL as a string
         """
 
-        if cls.host is None:
-            fail('gerrit.host not set')
+        url = Config.get('gerrit.host')
+        unsecure = Config.get('gerrit.unsecure', False)
 
-        url = cls.host
+        if url is None:
+            fail('gerrit.host not set')
 
         # From Gerrit Code Review Documentation (section Authentication):
         # https://gerrit-review.googlesource.com/Documentation/rest-api.html
@@ -130,7 +125,7 @@ class RequestFactory(object):
             url = '%s/a' % url
 
         if not url.startswith('http://') or not url.startswith('https://'):
-            return '%s://%s' % ('http' if cls.unsecure else 'https', url)
+            return '%s://%s' % ('http' if unsecure else 'https', url)
 
         return url
 
@@ -159,11 +154,8 @@ class RequestFactory(object):
         name, callback = method
         headers = kwargs['headers'] if 'headers' in kwargs else {}
 
-        if 'auth' in kwargs.keys() or cls.username is None:
+        if 'auth' in kwargs.keys() or not cls.require_auth():
             return callback(endpoint, **kwargs)
-
-        if cls.password is None:
-            cls.password = getpass.getpass()
 
         try:
             kwargs['auth'] = RequestFactory.get_http_digest_auth_token()
