@@ -25,9 +25,9 @@ class RequestFactory(object):
     log = logging.getLogger(__name__)
 
     # HTTP protocol method supported by this application
-    GET = ('GET', requests.get)
-    POST = ('POST', requests.post)
-    DELETE = ('DELETE', requests.delete)
+    GET = 'GET'
+    POST = 'POST'
+    DELETE = 'DELETE'
 
     # Response encoding
     BASE64, JSON, TEXT = range(3)
@@ -35,6 +35,9 @@ class RequestFactory(object):
     # To prevent against Cross Site Script Inclusion (XSSI) attacks, the JSON
     # response body starts with a magic prefix line that must be stripped
     GERRIT_MAGIC = ")]}'\n"
+
+    # The session object, to enable connection reuse
+    _session = None
 
     @classmethod
     def set_auth_token(cls, username, password=None):
@@ -134,6 +137,26 @@ class RequestFactory(object):
         return url
 
     @classmethod
+    def get_session(cls, **kwargs):
+        """
+        Return a requests.Session object.
+
+        RETURNS
+            requests.Session
+        """
+
+        if cls._session is None:
+            cls._session = requests.Session()
+
+            if cls.require_auth():
+                cls._session.auth = RequestFactory.get_http_digest_auth_token()
+
+            headers = kwargs['headers'] if 'headers' in kwargs else {}
+            cls._session.headers.update(headers)
+
+        return cls._session
+
+    @classmethod
     def send(cls, endpoint, method=GET, encoding=JSON, **kwargs):
         """
         Return the result of a HTTP request.
@@ -157,17 +180,8 @@ class RequestFactory(object):
 
         cls.log.debug('Query URL: %s' % endpoint)
 
-        name, callback = method
-        headers = kwargs['headers'] if 'headers' in kwargs else {}
-
-        if 'auth' in kwargs.keys() or not cls.require_auth():
-            return callback(endpoint, **kwargs)
-
         try:
-            kwargs['auth'] = RequestFactory.get_http_digest_auth_token()
-            kwargs['headers'] = headers
-
-            response = callback(endpoint, **kwargs)
+            response = cls.get_session().request(method, endpoint, **kwargs)
 
             if response.status_code == 204:
                 # No content
@@ -182,7 +196,7 @@ class RequestFactory(object):
         except RequestException as why:
             raise RequestError(
                 response.status_code,
-                'HTTP %s request failed: %s' % (name, endpoint), why)
+                'HTTP %s request failed: %s' % (method, endpoint), why)
 
         if encoding == RequestFactory.BASE64:
             encoded = response.text
