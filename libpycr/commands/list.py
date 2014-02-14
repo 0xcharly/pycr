@@ -6,7 +6,7 @@ import argparse
 import logging
 
 from libpycr.changes import tokenize_change_info
-from libpycr.exceptions import NoSuchChangeError, PyCRError
+from libpycr.exceptions import QueryError, PyCRError
 from libpycr.gerrit import Gerrit
 from libpycr.pager import Pager
 from libpycr.utils.output import Formatter
@@ -24,8 +24,7 @@ def parse_command_line(arguments):
         a list of ChangeInfo
     """
 
-    parser = argparse.ArgumentParser(
-        description='display list of change(s)')
+    parser = argparse.ArgumentParser(description='display list of change(s)')
 
     parser.add_argument(
         '--owner', default='self', help='the owner of the changes')
@@ -59,7 +58,8 @@ def main(arguments):
     try:
         changes = Gerrit.list_changes(status=status, owner=owner)
 
-    except NoSuchChangeError as why:
+    except QueryError as why:
+        # No result, not an error
         log.debug(str(why))
         return
 

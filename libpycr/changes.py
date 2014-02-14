@@ -119,5 +119,4 @@ def tokenize_change_info(change):
         (Token.Text, 'Owner:   %s' % change.owner),
         Formatter.newline_token(),
         (Token.Text, 'Subject: %s' % change.subject),
-        Formatter.newline_token()
     ]

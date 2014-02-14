@@ -18,23 +18,24 @@ from requests.exceptions import ConnectionError, RequestException
 from urlparse import urlparse
 
 
+# HTTP protocol method supported by this application
+GET = 'GET'
+POST = 'POST'
+DELETE = 'DELETE'
+
+# Response encoding
+BASE64, JSON, PLAIN = range(3)
+
+# To prevent against Cross Site Script Inclusion (XSSI) attacks, the JSON
+# response body starts with a magic prefix line that must be stripped
+GERRIT_MAGIC = ")]}'\n"
+
+
 class RequestFactory(object):
     """A Request factory."""
 
     # Logger
     log = logging.getLogger(__name__)
-
-    # HTTP protocol method supported by this application
-    GET = 'GET'
-    POST = 'POST'
-    DELETE = 'DELETE'
-
-    # Response encoding
-    BASE64, JSON, TEXT = range(3)
-
-    # To prevent against Cross Site Script Inclusion (XSSI) attacks, the JSON
-    # response body starts with a magic prefix line that must be stripped
-    GERRIT_MAGIC = ")]}'\n"
 
     # The session object, to enable connection reuse
     _session = None
@@ -163,15 +164,14 @@ class RequestFactory(object):
 
         PARAMETERS
             endpoint: the endpoint to the request
-            method: HTTP protocol method to use (either RequestFactory.GET or
-                RequestFactory.POST)
+            method: HTTP protocol method to use (either GET or POST)
             encoding: expected response format (JSON, base64 or plain text)
             **kwargs: any additional arguments to the underlying API call
 
         RETURNS
             a tuple of two elements: the raw response (stripped from magic for
                 the JSON format) and the decoded object of that response, or
-                None if expected_encoding is TEXT. If response is no content
+                None if expected_encoding is PLAIN. If response is no content
                 (status code 204), returns a tuple of None values
 
         RAISES
@@ -195,30 +195,41 @@ class RequestFactory(object):
 
         except RequestException as why:
             raise RequestError(
-                response.status_code,
+                response.status_code, response,
                 'HTTP %s request failed: %s' % (method, endpoint), why)
 
-        if encoding == RequestFactory.BASE64:
+        if encoding == BASE64:
             encoded = response.text
-            b64response = encoded + '=' * ((4 - len(encoded) % 4) % 4)
+
+            cls.log.debug('%d bytes to decode', len(encoded))
+
+            pad = -len(encoded) % 4
+            if pad == 3:
+                b64response = encoded[:-1]
+            else:
+                b64response = encoded + b'=' * pad
+
+            cls.log.debug('%d padded bytes to decode', len(b64response))
+            cls.log.debug(b64response)
 
             try:
-                decoded_response = base64.b64decode(b64response)
+                decoded = base64.decodestring(b64response)
             except TypeError:
                 # TypeError: incorrect padding
+                cls.log.exception('cannot decode base64 stream')
                 fail('invalid response stream (could not decode base64)')
 
-        elif encoding == RequestFactory.JSON:
-            if not response.text.startswith(RequestFactory.GERRIT_MAGIC):
+        elif encoding == JSON:
+            if not response.text.startswith(GERRIT_MAGIC):
                 fail('invalid response stream (magic prefix not found)')
 
-            json_response = response.text[len(RequestFactory.GERRIT_MAGIC):]
-            decoded_response = json.loads(json_response)
+            json_response = response.text[len(GERRIT_MAGIC):]
+            decoded = json.loads(json_response)
 
         else:
-            decoded_response = None
+            decoded = None
 
-        return response.text, decoded_response
+        return response.text, decoded
 
     @classmethod
     def get(cls, endpoint, **kwargs):
@@ -237,7 +248,7 @@ class RequestFactory(object):
             requests.exceptions.RequestException on error
         """
 
-        return cls.send(endpoint, method=RequestFactory.GET, **kwargs)
+        return cls.send(endpoint, method=GET, **kwargs)
 
     @classmethod
     def post(cls, endpoint, **kwargs):
@@ -256,7 +267,7 @@ class RequestFactory(object):
             requests.exceptions.RequestException on error
         """
 
-        return cls.send(endpoint, method=RequestFactory.POST, **kwargs)
+        return cls.send(endpoint, method=POST, **kwargs)
 
     @classmethod
     def delete(cls, endpoint, **kwargs):
@@ -271,4 +282,4 @@ class RequestFactory(object):
             requests.exceptions.RequestException on error
         """
 
-        cls.send(endpoint, method=RequestFactory.DELETE, **kwargs)
+        cls.send(endpoint, method=DELETE, **kwargs)

@@ -25,10 +25,21 @@ class NoSuchChangeError(PyCRError):
     pass
 
 
+class QueryError(PyCRError):
+    """Exception raised on an invalid query."""
+    pass
+
+
+class RebaseError(PyCRError):
+    """Exception raised on failed attempt to rebase a revision."""
+    pass
+
+
 class RequestError(PyCRError):
     """Exception raised when catching a requests.exceptions.RequestException.
     """
 
-    def __init__(self, status_code, message, cause=None):
+    def __init__(self, status_code, response, message, cause=None):
+        self.response = response
         self.status_code = status_code
         super(RequestError, self).__init__(message, cause)

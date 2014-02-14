@@ -5,115 +5,11 @@ This module encapsulate the Gerrit Code Review HTTP API protocol.
 import json
 import logging
 
-from libpycr.exceptions import NoSuchChangeError, PyCRError, RequestError
-from libpycr.http import RequestFactory
+from libpycr.exceptions import NoSuchChangeError, RebaseError, RequestError
+from libpycr.exceptions import PyCRError, QueryError
+from libpycr.http import RequestFactory, BASE64
+from libpycr.struct import AccountInfo, ChangeInfo, ReviewInfo
 from libpycr.utils.system import confirm, info
-
-
-# pylint: disable=R0903
-# Disable "Too few public methods"
-class AccountInfo(object):
-    """An account object."""
-
-    def __init__(self, name=None, email=None):
-        self.name = name
-        self.email = email
-
-    def __str__(self):
-        # Email is not always available
-        if not self.email:
-            return self.name
-
-        return '%s <%s>' % (self.name, self.email)
-
-    @staticmethod
-    def from_json(data):
-        """
-        Initialize a AccountInfo object and return it.
-
-        PARAMETERS
-            data: the JSON representation of the account as emitted by the
-                Gerrit Code Review server (AccountInfo)
-
-        RETURNS
-            a AccountInfo object
-        """
-
-        account = AccountInfo(data['name'])
-
-        # Email is not always available
-        if 'email' in data:
-            account.email = data['email']
-
-        return account
-
-
-# pylint: disable=R0902,R0903
-# Disable "Too many instance attributes"
-# Disable "Too few public methods"
-class ChangeInfo(object):
-    """A change object."""
-
-    def __init__(self):
-        self.uuid = None
-        self.change_id = None
-        self.legacy_id = None
-        self.project = None
-        self.branch = None
-        self.subject = None
-        self.owner = None
-
-    @staticmethod
-    def from_json(data):
-        """
-        Initialize a ChangeInfo object and return it.
-
-        PARAMETERS
-            data: the JSON representation of the change as emitted by the
-                Gerrit Code Review server (ChangeInfo)
-
-        RETURNS
-            a ChangeInfo object
-        """
-
-        change = ChangeInfo()
-
-        change.uuid = data['id']
-        change.change_id = data['change_id']
-        change.legacy_id = data['_number']
-        change.project = data['project']
-        change.branch = data['branch']
-        change.subject = data['subject']
-        change.owner = AccountInfo.from_json(data['owner'])
-
-        return change
-
-
-# pylint: disable=R0903
-# Disable "Too few public methods"
-class ReviewInfo(object):
-    """A review object."""
-
-    def __init__(self):
-        self.reviewer = None
-        self.approvals = None
-
-    @staticmethod
-    def from_json(data):
-        """
-        Initialize the ReviewInfo object and return it.
-
-        PARAMETERS
-            data: the JSON representation of the review as emitted by the
-                Gerrit Code Review server (ReviewerInfo)
-        """
-
-        review = ReviewInfo()
-
-        review.reviewer = AccountInfo.from_json(data)
-        review.approvals = data['approvals'].items()
-
-        return review
 
 
 class Gerrit(object):
@@ -167,6 +63,26 @@ class Gerrit(object):
                            change_id, '/detail' if detailed else '')
 
     @staticmethod
+    def get_revisions_endpoint(change_id, revision_id):
+        """
+        Return an URL to the Gerrit Code Review server. This URL allows queries
+        to a specific reviesion of the given change.
+
+        PARAMETERS
+            change_id: any identification number for the change (UUID,
+                Change-Id, or legacy numeric change ID)
+            revision_id: identifier that uniquely identifies one revision of a
+                change (current, a commit ID (SHA1) or abbreviated commit ID,
+                or a legacy numeric patch number)
+
+        RETURNS
+            the URL as a string
+        """
+
+        change_url = Gerrit.get_changes_endpoint(change_id)
+        return '%s/revisions/%s' % (change_url, revision_id)
+
+    @staticmethod
     def get_patch_endpoint(change_id, revision_id):
         """
         Return an URL to the Gerrit Code Review server. This URL allows queries
@@ -183,8 +99,28 @@ class Gerrit(object):
             the URL as a string
         """
 
-        change_url = Gerrit.get_changes_endpoint(change_id)
-        return '%s/revisions/%s/patch' % (change_url, revision_id)
+        change_url = Gerrit.get_revisions_endpoint(change_id, revision_id)
+        return '%s/patch' % change_url
+
+    @staticmethod
+    def get_rebase_endpoint(change_id, revision_id):
+        """
+        Return an URL to the Gerrit Code Review server. This URL allows queries
+        to rebase the given change.
+
+        PARAMETERS
+            change_id: any identification number for the change (UUID,
+                Change-Id, or legacy numeric change ID)
+            revision_id: identifier that uniquely identifies one revision of a
+                change (current, a commit ID (SHA1) or abbreviated commit ID,
+                or a legacy numeric patch number)
+
+        RETURNS
+            the URL as a string
+        """
+
+        change_url = Gerrit.get_revisions_endpoint(change_id, revision_id)
+        return '%s/rebase' % change_url
 
     @staticmethod
     def get_reviewers_endpoint(change_id):
@@ -285,11 +221,11 @@ class Gerrit(object):
 
         except RequestError as why:
             if why.status_code == 404:
-                raise NoSuchChangeError('no result for query criterion')
+                raise QueryError('no result for query criterion')
 
             raise PyCRError('cannot fetch change details', why)
 
-        return [ChangeInfo.from_json(c) for c in response]
+        return [ChangeInfo.parse(c) for c in response]
 
     @classmethod
     def get_change(cls, change_id):
@@ -321,7 +257,7 @@ class Gerrit(object):
 
             raise PyCRError('cannot fetch change details', why)
 
-        return ChangeInfo.from_json(response)
+        return ChangeInfo.parse(response)
 
     @classmethod
     def get_patch(cls, change_id, revision_id='current'):
@@ -349,8 +285,7 @@ class Gerrit(object):
 
         try:
             endpoint = Gerrit.get_patch_endpoint(change_id, revision_id)
-            _, patch = RequestFactory.get(endpoint,
-                                          encoding=RequestFactory.BASE64)
+            _, patch = RequestFactory.get(endpoint, encoding=BASE64)
 
         except RequestError as why:
             if why.status_code == 404:
@@ -359,6 +294,43 @@ class Gerrit(object):
             raise PyCRError('unexpected error', why)
 
         return patch
+
+    @classmethod
+    def rebase(cls, change_id, revision_id='current'):
+        """
+        Send a GET request to the Gerrit Code Review server to rebase the
+        given change.
+
+        PARAMETERS
+            change_id: any identification number for the change (UUID,
+                Change-Id, or legacy numeric change ID)
+            revision_id: identifier that uniquely identifies one revision of a
+                change (current, a commit ID (SHA1) or abbreviated commit ID,
+                or a legacy numeric patch number)
+
+        RAISES
+            NoSuchChangeError if the change does not exist
+            PyCRError on any other error
+        """
+
+        cls.log.debug('rebase: %s (revision: %s)' % (change_id, revision_id))
+
+        try:
+            endpoint = Gerrit.get_rebase_endpoint(change_id, revision_id)
+            _, change = RequestFactory.post(endpoint)
+
+        except RequestError as why:
+            if why.status_code == 404:
+                raise NoSuchChangeError(change_id)
+
+            if why.status_code == 409:
+                # There was a conflict rebasing the change
+                # Error message is return as PLAIN text
+                raise RebaseError(why.response.text.strip())
+
+            raise PyCRError('unexpected error', why)
+
+        return ChangeInfo.parse(change)
 
     @classmethod
     def get_reviews(cls, change_id):
@@ -400,7 +372,7 @@ class Gerrit(object):
         # experiences show that it's not always the case, and that the change
         # owner can also be in the list although not a reviewers.
 
-        return [ReviewInfo.from_json(r) for r in response if 'approvals' in r]
+        return [ReviewInfo.parse(r) for r in response if 'approvals' in r]
 
     @classmethod
     def add_reviewer(cls, change_id, account_id, force=False):
@@ -462,7 +434,7 @@ class Gerrit(object):
                 raise PyCRError('unexpected error', why)
 
         assert 'reviewers' in response, '"reviewers" not in HTTP response'
-        return [AccountInfo.from_json(r) for r in response['reviewers']]
+        return [AccountInfo.parse(r) for r in response['reviewers']]
 
     @classmethod
     def get_reviewer(cls, change_id, account_id):
@@ -497,7 +469,7 @@ class Gerrit(object):
 
             raise PyCRError('unexpected error', why)
 
-        return ReviewInfo.from_json(response)
+        return ReviewInfo.parse(response)
 
     @classmethod
     def delete_reviewer(cls, change_id, account_id):
@@ -536,4 +508,4 @@ class Gerrit(object):
             raise PyCRError('unexpected error', why)
 
         assert len(response) == 1
-        return ReviewInfo.from_json(response[0])
+        return ReviewInfo.parse(response[0])

@@ -63,6 +63,7 @@ def main(arguments):
                 tokens.append(Formatter.newline_token())
 
             tokens.extend(tokenize_change_info(change))
+            tokens.append(Formatter.newline_token())
 
             for review in reviews:
                 tokens.extend([
