@@ -2,6 +2,8 @@
 This module contains the input / output formatting routines.
 """
 
+import os
+import re
 import pygments
 
 from libpycr.config import Config
@@ -54,6 +56,8 @@ class OutputStyle(Style):
 class Formatter(object):
     """Output formatter."""
 
+    DIFF_HEADING_RE = re.compile('From (?P<commit>[0-9a-f]{8,40}) .*')
+
     # The formatter name for disabled colored output
     NO_COLOR = 'null'
 
@@ -97,6 +101,17 @@ class Formatter(object):
             cls.formatter = get_formatter_by_name(name, style=OutputStyle,
                                                   encoding='utf-8')
 
+    @staticmethod
+    def newline_token():
+        """
+        Return a newline token.
+
+        RETURN
+            a new formatter token
+        """
+
+        return (Token.Whitespace, os.linesep)
+
     @classmethod
     def format(cls, tokens):
         """
@@ -113,7 +128,7 @@ class Formatter(object):
         return pygments.format(tokens, cls.formatter)
 
     @classmethod
-    def format_diff(cls, diff):
+    def tokenize_diff(cls, diff):
         """
         Format the given diff.
 
@@ -125,4 +140,18 @@ class Formatter(object):
         """
 
         cls.__initialize()
-        return cls.format(pygments.lex(diff, DiffLexer(encoding='utf-8')))
+
+        tokens = []
+
+        heading = diff.splitlines()[0]
+        match = Formatter.DIFF_HEADING_RE.match(heading)
+        diff = diff[len(heading):]
+
+        if match:
+            tokens.extend([
+                (Token.Generic.Heading, 'commit %s' % match.group('commit')),
+                Formatter.newline_token()
+            ])
+
+        tokens.extend(pygments.lex(diff, DiffLexer(encoding='utf-8')))
+        return tokens

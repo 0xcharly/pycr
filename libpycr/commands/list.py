@@ -5,10 +5,11 @@ Display the list of changes given the input criterion.
 import argparse
 import logging
 
-from libpycr.changes import display_change_info
+from libpycr.changes import tokenize_change_info
 from libpycr.exceptions import NoSuchChangeError, PyCRError
 from libpycr.gerrit import Gerrit
 from libpycr.pager import Pager
+from libpycr.utils.output import Formatter
 from libpycr.utils.system import fail
 
 
@@ -67,7 +68,10 @@ def main(arguments):
 
     with Pager(command='list'):
         for idx, change in enumerate(changes):
-            if idx:
-                print ''
+            tokens = []
 
-            display_change_info(change)
+            if idx:
+                tokens.append(Formatter.newline_token())
+
+            tokens.extend(tokenize_change_info(change))
+            print Formatter.format(tokens)

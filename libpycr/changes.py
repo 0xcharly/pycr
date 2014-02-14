@@ -102,17 +102,22 @@ def fetch_change_list_or_fail(change_list):
     return changes
 
 
-def display_change_info(change):
+def tokenize_change_info(change):
     """
-    Display the given change's information (change-id, subject and owner).
+    Tokenize the given change's information (change-id, subject and owner).
 
     PARAMETERS
         change: a ChangeInfo
+
+    RETURNS
+        a stream of token
     """
 
-    print Formatter.format([
-        (Token.Generic.Heading, 'change-id %s' % change.change_id)])
-    print Formatter.format([
-        (Token.Text, 'Owner:   %s' % change.owner)])
-    print Formatter.format([
-        (Token.Text, 'Subject: %s' % change.subject)])
+    return [
+        (Token.Generic.Heading, 'change-id %s' % change.change_id),
+        Formatter.newline_token(),
+        (Token.Text, 'Owner:   %s' % change.owner),
+        Formatter.newline_token(),
+        (Token.Text, 'Subject: %s' % change.subject),
+        Formatter.newline_token()
+    ]

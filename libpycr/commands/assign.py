@@ -5,7 +5,7 @@ Assign one or more reviewers to one or more Gerrit CL.
 import os
 import sys
 
-from libpycr.changes import display_change_info, fetch_change_list_or_fail
+from libpycr.changes import tokenize_change_info, fetch_change_list_or_fail
 from libpycr.exceptions import PyCRError
 from libpycr.gerrit import Gerrit
 from libpycr.utils.output import Formatter, Token
@@ -88,8 +88,10 @@ def main(arguments):
         added = []
         deleted = []
 
+        tokens = []
+
         if idx:
-            print ''
+            tokens.append(Formatter.newline_token())
 
         # Add reviewers
         for account_id in to_add:
@@ -115,26 +117,34 @@ def main(arguments):
                 warn('%s: cannot delete reviewer %s' %
                      (change.change_id[:9], account_id), why)
 
-        display_change_info(change)
-        print ''
+        tokens.extend(tokenize_change_info(change))
+        tokens.append(Formatter.newline_token())
 
         if not added and not deleted:
-            print '# nothing to do (reviewers list already up-to-date)'
+            tokens.append(
+                (Token.Text,
+                 '# nothing to do (reviewers list already up-to-date)'))
+
+            print Formatter.format(tokens)
             continue
 
-        print '# Reviewers updated:'
+        tokens.append((Token.Text, '# Reviewers updated:'))
 
-        prefix = (Token.Whitespace, '#     ')
+        prefix = (Token.Text, '#     ')
         for reviewer in added:
-            print Formatter.format([
+            tokens.extend([
+                Formatter.newline_token(),
                 prefix,
                 (Token.Review.OK, '+'),
                 (Token.Text, ' %s' % reviewer)
             ])
 
         for reviewer in deleted:
-            print Formatter.format([
+            tokens.extend([
+                Formatter.newline_token(),
                 prefix,
                 (Token.Review.KO, '-'),
                 (Token.Text, ' %s' % reviewer)
             ])
+
+        print Formatter.format(tokens)

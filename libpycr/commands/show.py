@@ -4,7 +4,7 @@ Display the code review scores for one or more Gerrit CL.
 
 import argparse
 
-from libpycr.changes import display_change_info, fetch_change_list_or_fail
+from libpycr.changes import tokenize_change_info, fetch_change_list_or_fail
 from libpycr.exceptions import PyCRError
 from libpycr.gerrit import Gerrit
 from libpycr.pager import Pager
@@ -57,15 +57,19 @@ def main(arguments):
                 warn('%s: cannot list reviewers' % change.change_id[:9], why)
                 continue
 
-            if idx:
-                print ''
+            tokens = []
 
-            display_change_info(change)
+            if idx:
+                tokens.append(Formatter.newline_token())
+
+            tokens.extend(tokenize_change_info(change))
 
             for review in reviews:
-                print ''
-                print '    %s' % Formatter.format([
-                    (Token.Text, 'Reviewer: %s' % review.reviewer)])
+                tokens.extend([
+                    Formatter.newline_token(),
+                    (Token.Text, '    Reviewer: %s' % review.reviewer),
+                    Formatter.newline_token()
+                ])
 
                 for label, score in review.approvals:
                     if score in ('+1', '+2'):
@@ -75,11 +79,15 @@ def main(arguments):
                     else:
                         token = Token.Review.NONE
 
-                    print '    %s' % Formatter.format([
-                        (Token.Text, label),
+                    tokens.extend([
+                        (Token.Text, '    %s' % label),
                         (Token.Text, ': '),
                         (token, score)
                     ])
 
-            print ''
-            print Formatter.format_diff(patch)
+                tokens.append(Formatter.newline_token())
+
+            tokens.append(Formatter.newline_token())
+            tokens.extend(Formatter.tokenize_diff(patch))
+
+            print Formatter.format(tokens)
