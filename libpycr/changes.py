@@ -101,6 +101,7 @@ def fetch_change_list_or_fail(change_list):
 
     return changes
 
+
 def display_change_info(change):
     """
     Display the given change's information (change-id, subject and owner).
@@ -111,5 +112,7 @@ def display_change_info(change):
 
     print Formatter.format([
         (Token.Generic.Heading, 'change-id %s' % change.change_id)])
-    print 'Owner:   %s' % change.owner
-    print 'Subject: %s' % change.subject
+    print Formatter.format([
+        (Token.Text, 'Owner:   %s' % change.owner)])
+    print Formatter.format([
+        (Token.Text, 'Subject: %s' % change.subject)])

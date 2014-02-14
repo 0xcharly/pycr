@@ -127,8 +127,14 @@ def main(arguments):
         prefix = (Token.Whitespace, '#     ')
         for reviewer in added:
             print Formatter.format([
-                prefix, (Token.Review.OK, '+'), (None, ' %s' % reviewer)])
+                prefix,
+                (Token.Review.OK, '+'),
+                (Token.Text, ' %s' % reviewer)
+            ])
 
         for reviewer in deleted:
             print Formatter.format([
-                prefix, (Token.Review.KO, '-'), (None, ' %s' % reviewer)])
+                prefix,
+                (Token.Review.KO, '-'),
+                (Token.Text, ' %s' % reviewer)
+            ])

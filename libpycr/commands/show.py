@@ -51,6 +51,7 @@ def main(arguments):
         for idx, change in enumerate(changes):
             try:
                 reviews = Gerrit.get_reviews(change.uuid)
+                patch = Gerrit.get_patch(change.uuid)
 
             except PyCRError as why:
                 warn('%s: cannot list reviewers' % change.change_id[:9], why)
@@ -63,7 +64,8 @@ def main(arguments):
 
             for review in reviews:
                 print ''
-                print '    Reviewer: %s' % review.reviewer
+                print '    %s' % Formatter.format([
+                    (Token.Text, 'Reviewer: %s' % review.reviewer)])
 
                 for label, score in review.approvals:
                     if score in ('+1', '+2'):
@@ -74,7 +76,10 @@ def main(arguments):
                         token = Token.Review.NONE
 
                     print '    %s' % Formatter.format([
-                        (None, label),
-                        (None, ': '),
+                        (Token.Text, label),
+                        (Token.Text, ': '),
                         (token, score)
                     ])
+
+            print ''
+            print Formatter.format_diff(patch)

@@ -2,6 +2,7 @@
 This module encapsulate the logic for querying an HTTP server.
 """
 
+import base64
 import getpass
 import logging
 import json
@@ -27,6 +28,9 @@ class RequestFactory(object):
     GET = ('GET', requests.get)
     POST = ('POST', requests.post)
     DELETE = ('DELETE', requests.delete)
+
+    # Response encoding
+    BASE64, JSON, TEXT = range(3)
 
     # To prevent against Cross Site Script Inclusion (XSSI) attacks, the JSON
     # response body starts with a magic prefix line that must be stripped
@@ -130,7 +134,7 @@ class RequestFactory(object):
         return url
 
     @classmethod
-    def send(cls, endpoint, method=GET, **kwargs):
+    def send(cls, endpoint, method=GET, encoding=JSON, **kwargs):
         """
         Return the result of a HTTP request.
 
@@ -138,12 +142,14 @@ class RequestFactory(object):
             endpoint: the endpoint to the request
             method: HTTP protocol method to use (either RequestFactory.GET or
                 RequestFactory.POST)
+            encoding: expected response format (JSON, base64 or plain text)
             **kwargs: any additional arguments to the underlying API call
 
         RETURNS
-            a tuple of two elements: the raw response (stripped from magic) and
-                the json object of that response, or None if no content (status
-                code 204)
+            a tuple of two elements: the raw response (stripped from magic for
+                the JSON format) and the decoded object of that response, or
+                None if expected_encoding is TEXT. If response is no content
+                (status code 204), returns a tuple of None values
 
         RAISES
             requests.exceptions.RequestException on error
@@ -178,11 +184,27 @@ class RequestFactory(object):
                 response.status_code,
                 'HTTP %s request failed: %s' % (name, endpoint), why)
 
-        if not response.text.startswith(RequestFactory.GERRIT_MAGIC):
-            fail('invalid Gerrit Code Review stream (magic prefix not found)')
+        if encoding == RequestFactory.BASE64:
+            encoded = response.text
+            b64response = encoded + '=' * ((4 - len(encoded) % 4) % 4)
 
-        return (response.text,
-                json.loads(response.text[len(RequestFactory.GERRIT_MAGIC):]))
+            try:
+                decoded_response = base64.b64decode(b64response)
+            except TypeError:
+                # TypeError: incorrect padding
+                fail('invalid response stream (could not decode base64)')
+
+        elif encoding == RequestFactory.JSON:
+            if not response.text.startswith(RequestFactory.GERRIT_MAGIC):
+                fail('invalid response stream (magic prefix not found)')
+
+            json_response = response.text[len(RequestFactory.GERRIT_MAGIC):]
+            decoded_response = json.loads(json_response)
+
+        else:
+            decoded_response = None
+
+        return response.text, decoded_response
 
     @classmethod
     def get(cls, endpoint, **kwargs):

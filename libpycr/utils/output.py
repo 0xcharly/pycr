@@ -7,6 +7,7 @@ import pygments
 from libpycr.config import Config
 
 from pygments.formatters import get_all_formatters, get_formatter_by_name
+from pygments.lexers.text import DiffLexer
 from pygments.style import Style
 from pygments.styles import get_style_by_name
 
@@ -39,11 +40,14 @@ class OutputStyle(Style):
     default_style = ''
     native = get_style_by_name('native')
     styles = update_dict(native.styles, {
-        Token.Review.OK: '#729519',
+        Token.Review.OK: native.styles[Token.Generic.Inserted],
         Token.Review.KO: native.styles[Token.Generic.Error],
-        Token.Review.NONE: native.styles[Token.Comment],
+        Token.Review.NONE: native.styles[Token.Generic.Output],
 
-        Token.Generic.Heading: '#b4881f'
+        Token.Generic.Heading:    '#b4881f',
+        Token.Generic.Subheading: '#c0c0c0',
+
+        Token.Text: native.styles[Token.Comment]
     })
 
 
@@ -79,6 +83,21 @@ class Formatter(object):
         Config.set('core.formatter', formatter_name)
 
     @classmethod
+    def __initialize(cls):
+        """
+        Initialize the object if needed.
+        """
+
+        if cls.formatter is None:
+            name = Config.get('core.color', Formatter.NO_COLOR)
+
+            if name == 'auto':
+                name = 'terminal256'
+
+            cls.formatter = get_formatter_by_name(name, style=OutputStyle,
+                                                  encoding='utf-8')
+
+    @classmethod
     def format(cls, tokens):
         """
         Format the given list of tokens.
@@ -90,12 +109,20 @@ class Formatter(object):
             the formatted string
         """
 
-        if cls.formatter is None:
-            name = Config.get('core.color', Formatter.NO_COLOR)
-
-            if name == 'auto':
-                name = 'terminal256'
-
-            cls.formatter = get_formatter_by_name(name, style=OutputStyle)
-
+        cls.__initialize()
         return pygments.format(tokens, cls.formatter)
+
+    @classmethod
+    def format_diff(cls, diff):
+        """
+        Format the given diff.
+
+        PARAMETERS
+            diff: the patch to format
+
+        RETURNS
+            the formatted string
+        """
+
+        cls.__initialize()
+        return cls.format(pygments.lex(diff, DiffLexer(encoding='utf-8')))

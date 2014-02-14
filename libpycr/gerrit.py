@@ -167,6 +167,26 @@ class Gerrit(object):
                            change_id, '/detail' if detailed else '')
 
     @staticmethod
+    def get_patch_endpoint(change_id, revision_id):
+        """
+        Return an URL to the Gerrit Code Review server. This URL allows queries
+        for the patch of the given change.
+
+        PARAMETERS
+            change_id: any identification number for the change (UUID,
+                Change-Id, or legacy numeric change ID)
+            revision_id: identifier that uniquely identifies one revision of a
+                change (current, a commit ID (SHA1) or abbreviated commit ID,
+                or a legacy numeric patch number)
+
+        RETURNS
+            the URL as a string
+        """
+
+        change_url = Gerrit.get_changes_endpoint(change_id)
+        return '%s/revisions/%s/patch' % (change_url, revision_id)
+
+    @staticmethod
     def get_reviewers_endpoint(change_id):
         """
         Return an URL to the Gerrit Code Review server. This URL allows queries
@@ -302,6 +322,43 @@ class Gerrit(object):
             raise PyCRError('cannot fetch change details', why)
 
         return ChangeInfo.from_json(response)
+
+    @classmethod
+    def get_patch(cls, change_id, revision_id='current'):
+        """
+        Send a GET request to the Gerrit Code Review server to fetch the
+        patch for the given change.
+
+        PARAMETERS
+            change_id: any identification number for the change (UUID,
+                Change-Id, or legacy numeric change ID)
+            revision_id: identifier that uniquely identifies one revision of a
+                change (current, a commit ID (SHA1) or abbreviated commit ID,
+                or a legacy numeric patch number)
+
+        RETURNS
+            the diff as a string
+
+        RAISES
+            NoSuchChangeError if the change does not exist
+            PyCRError on any other error
+        """
+
+        cls.log.debug('Fetch diff: %s (revision: %s)' %
+                      (change_id, revision_id))
+
+        try:
+            endpoint = Gerrit.get_patch_endpoint(change_id, revision_id)
+            _, patch = RequestFactory.get(endpoint,
+                                          encoding=RequestFactory.BASE64)
+
+        except RequestError as why:
+            if why.status_code == 404:
+                raise NoSuchChangeError(change_id)
+
+            raise PyCRError('unexpected error', why)
+
+        return patch
 
     @classmethod
     def get_reviews(cls, change_id):
