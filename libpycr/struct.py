@@ -3,23 +3,57 @@ This module contains all the Gerrit structure that can be received from the
 server.
 """
 
+from abc import ABCMeta, abstractmethod
+
+from libpycr.utils.output import Formatter, Token, NEW_LINE
+
 
 # pylint: disable=R0902,R0903
-# Disable "Too few public methods" (for all above classes)
 # Disable "Too many instance attributes" (for all above classes)
-class AccountInfo(object):
-    """An account object."""
+# Disable "Too few public methods" (for all above classes)
+class Info(object):
+    """Info interface."""
 
-    def __init__(self, name=None, email=None):
-        self.name = name
-        self.email = email
+    __metaclass__ = ABCMeta
 
     def __str__(self):
-        # Email is not always available
-        if not self.email:
-            return self.name
+        return Formatter.format(self.tokenize())
 
-        return '%s <%s>' % (self.name, self.email)
+    @abstractmethod
+    def tokenize(self):
+        """
+        Generate a stream of token.
+        This method should be implemented as a Python generator.
+
+        RETURNS
+            a stream of tokens: tuple of (Token, string)
+        """
+        pass
+
+
+class AccountInfo(Info):
+    """An account object."""
+
+    def __init__(self):
+        self.name = None
+        self.email = None
+        self.username = None
+
+    def tokenize(self):
+        """Overrides."""
+
+        # If email is available:
+        #   John Doe <john@doe.com>
+        # else:
+        #   John Doe
+
+        yield Token.Text, self.name
+
+        if self.email:
+            yield Token.Whitespace, ' '
+            yield Token.Punctuation, '<'
+            yield Token.Text, self.email
+            yield Token.Punctuation, '>'
 
     @staticmethod
     def parse(data):
@@ -34,13 +68,16 @@ class AccountInfo(object):
             a AccountInfo object
         """
 
-        account = AccountInfo(data['name'])
+        account = AccountInfo()
+
+        account.name = data['name']
         account.email = data.get('email', None)
+        account.username = data.get('username', None)
 
         return account
 
 
-class GitPersonInfo(object):
+class GitPersonInfo(Info):
     """A git person object."""
 
     def __init__(self):
@@ -48,6 +85,16 @@ class GitPersonInfo(object):
         self.email = None
         self.date = None
         self.timezone = None
+
+    def tokenize(self):
+        """Override."""
+
+        # John Doe <john@doe.com>
+        yield Token.Text, self.name
+        yield Token.Whitespace, ' '
+        yield Token.Punctuation, '<'
+        yield Token.Text, self.email
+        yield Token.Punctuation, '>'
 
     @staticmethod
     def parse(data):
@@ -72,16 +119,40 @@ class GitPersonInfo(object):
         return person
 
 
-class CommitInfo(object):
+class CommitInfo(Info):
     """A commit object."""
 
     def __init__(self):
         self.commit_id = None
-        self.parent = None
+        self.parents = None
         self.author = None
         self.committer = None
         self.subject = None
         self.message = None
+
+    def tokenize(self):
+        """Override."""
+
+        # Commit-Id
+        # commit a61970cc872b6f31953869450fc9c560257126e8
+        yield Token.Generic.Heading, 'commit %s' % self.commit_id
+        yield NEW_LINE
+
+        # Parents
+        # commit dee82bba6ab9add16c4d652f7c4d8e58e107c6ef
+        if self.parents:
+            for parent in self.parents:
+                yield Token.TEXT, 'commit %s' % parent.commit_id
+                yield NEW_LINE
+
+        # Commit subject
+        # Subject: Implement the REBASE command.
+        yield Token.Text, 'Subject: %s' % self.subject
+        yield NEW_LINE
+
+        if self.author:
+            yield Token.Text, 'Author:  %s' % self.author
+            yield NEW_LINE
 
     @staticmethod
     def parse(data):
@@ -102,9 +173,9 @@ class CommitInfo(object):
         commit.subject = data['subject']
 
         if 'parent' in data:
-            commit.parent = []
+            commit.parents = []
             for parent in data['parent']:
-                commit.parent.append(CommitInfo.parse(parent))
+                commit.parents.append(CommitInfo.parse(parent))
 
         if 'author' in data:
             commit.author = GitPersonInfo.parse(data['author'])
@@ -116,7 +187,7 @@ class CommitInfo(object):
         return commit
 
 
-class RevisionInfo(object):
+class RevisionInfo(Info):
     """A revision object."""
 
     def __init__(self):
@@ -127,6 +198,13 @@ class RevisionInfo(object):
         self.commit = None
         self.files = None
         self.actions = None
+
+    def tokenize(self):
+        """Override."""
+
+        if self.commit:
+            for token in self.commit.tokenize():
+                yield token
 
     @staticmethod
     def parse(data):
@@ -157,7 +235,7 @@ class RevisionInfo(object):
         return revision
 
 
-class ChangeInfo(object):
+class ChangeInfo(Info):
     """A change object."""
 
     def __init__(self):
@@ -170,6 +248,15 @@ class ChangeInfo(object):
         self.owner = None
         self.revisions = None
         self.current_revision = None
+
+    def tokenize(self):
+        """Override."""
+
+        yield Token.Generic.Heading, 'change-id %s' % self.change_id
+        yield NEW_LINE
+        yield Token.Text, 'Owner:   %s' % self.owner
+        yield NEW_LINE
+        yield Token.Text, 'Subject: %s' % self.subject
 
     @staticmethod
     def parse(data):
@@ -199,8 +286,8 @@ class ChangeInfo(object):
         if 'revisions' in data:
             change.revisions = {}
 
-            for commit_id, details in data['revisions']:
-                rev = RevisionInfo(details)
+            for commit_id, details in data['revisions'].items():
+                rev = RevisionInfo.parse(details)
                 # The commit ID is not specified twice in the commit detail:
                 # it needs to be set manually
                 rev.commit.commit_id = commit_id
@@ -209,12 +296,36 @@ class ChangeInfo(object):
         return change
 
 
-class ReviewInfo(object):
+class ReviewInfo(Info):
     """A review object."""
 
     def __init__(self):
         self.reviewer = None
         self.approvals = None
+
+    def tokenize(self):
+        """Override."""
+
+        # Reviewer information
+        #     Reviewer: John Doe <john@doe.com>
+        yield Token.Text, '    Reviewer: '
+        for token in self.reviewer.tokenize():
+            yield token
+        yield NEW_LINE
+
+        # Review scores
+        #     Code-Review: +2
+        for label, score in self.approvals:
+            if score in ('+1', '+2'):
+                token = Token.Review.OK
+            elif score in ('-1', '-2'):
+                token = Token.Review.KO
+            else:
+                token = Token.Review.NONE
+
+            yield Token.Text, '    %s: ' % label
+            yield token, score
+            yield NEW_LINE
 
     @staticmethod
     def parse(data):

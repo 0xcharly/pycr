@@ -5,11 +5,10 @@ Display the list of changes given the input criterion.
 import argparse
 import logging
 
-from libpycr.changes import tokenize_change_info
 from libpycr.exceptions import QueryError, PyCRError
 from libpycr.gerrit import Gerrit
 from libpycr.pager import Pager
-from libpycr.utils.output import Formatter
+from libpycr.utils.output import Formatter, NEW_LINE
 from libpycr.utils.system import fail
 
 
@@ -42,6 +41,25 @@ def parse_command_line(arguments):
     return cmdline.owner, cmdline.status
 
 
+def tokenize(idx, change):
+    """
+    Token generator for the output.
+
+    PARAMETERS
+        idx: index of the change in the list of changes to fetch
+        change: the ChangeInfo corresponding to the change
+
+    RETURNS
+        a stream of tokens: tuple of (Token, string)
+    """
+
+    if idx:
+        yield NEW_LINE
+
+    for token in change.tokenize():
+        yield token
+
+
 def main(arguments):
     """
     The entry point for the LIST command.
@@ -68,10 +86,4 @@ def main(arguments):
 
     with Pager(command='list'):
         for idx, change in enumerate(changes):
-            tokens = []
-
-            if idx:
-                tokens.append(Formatter.newline_token())
-
-            tokens.extend(tokenize_change_info(change))
-            print Formatter.format(tokens)
+            print Formatter.format(tokenize(idx, change))

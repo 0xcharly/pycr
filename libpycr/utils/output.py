@@ -16,6 +16,10 @@ from pygments.styles import get_style_by_name
 from pygments.token import Token as Token
 
 
+# Newline token
+NEW_LINE = (Token.Whitespace, os.linesep)
+
+
 def update_dict(origin, extras):
     """
     Update the content of ORIGIN with the content of EXTRAS, and return the
@@ -49,13 +53,15 @@ class OutputStyle(Style):
         Token.Generic.Heading:    '#b4881f',
         Token.Generic.Subheading: '#c0c0c0',
 
-        Token.Text: native.styles[Token.Comment]
+        Token.Text: native.styles[Token.Comment],
+        Token.Punctuation: native.styles[Token.Comment]
     })
 
 
 class Formatter(object):
     """Output formatter."""
 
+    # Heading regex to match a Gerrit diff
     DIFF_HEADING_RE = re.compile('From (?P<commit>[0-9a-f]{8,40}) .*')
 
     # The formatter name for disabled colored output
@@ -101,17 +107,6 @@ class Formatter(object):
             cls.formatter = get_formatter_by_name(name, style=OutputStyle,
                                                   encoding='utf-8')
 
-    @staticmethod
-    def newline_token():
-        """
-        Return a newline token.
-
-        RETURN
-            a new formatter token
-        """
-
-        return (Token.Whitespace, os.linesep)
-
     @classmethod
     def format(cls, tokens):
         """
@@ -130,28 +125,22 @@ class Formatter(object):
     @classmethod
     def tokenize_diff(cls, diff):
         """
-        Format the given diff.
+        Token generator for a patch string
 
         PARAMETERS
             diff: the patch to format
 
         RETURNS
-            the formatted string
+            a stream of tokens: tuple of (Token, string)
         """
-
-        cls.__initialize()
-
-        tokens = []
 
         heading = diff.splitlines()[0]
         match = Formatter.DIFF_HEADING_RE.match(heading)
         diff = diff[len(heading):]
 
         if match:
-            tokens.extend([
-                (Token.Generic.Heading, 'commit %s' % match.group('commit')),
-                Formatter.newline_token()
-            ])
+            yield Token.Generic.Heading, 'commit %s' % match.group('commit')
+            yield NEW_LINE
 
-        tokens.extend(pygments.lex(diff, DiffLexer(encoding='utf-8')))
-        return tokens
+        for token in pygments.lex(diff, DiffLexer(encoding='utf-8')):
+            yield token

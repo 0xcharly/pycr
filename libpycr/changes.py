@@ -7,7 +7,6 @@ import re
 from libpycr.exceptions import NoSuchChangeError
 from libpycr.gerrit import Gerrit
 from libpycr.http import RequestFactory
-from libpycr.utils.output import Formatter, Token
 from libpycr.utils.system import fail, warn
 
 
@@ -100,23 +99,3 @@ def fetch_change_list_or_fail(change_list):
         fail(message)
 
     return changes
-
-
-def tokenize_change_info(change):
-    """
-    Tokenize the given change's information (change-id, subject and owner).
-
-    PARAMETERS
-        change: a ChangeInfo
-
-    RETURNS
-        a stream of token
-    """
-
-    return [
-        (Token.Generic.Heading, 'change-id %s' % change.change_id),
-        Formatter.newline_token(),
-        (Token.Text, 'Owner:   %s' % change.owner),
-        Formatter.newline_token(),
-        (Token.Text, 'Subject: %s' % change.subject),
-    ]

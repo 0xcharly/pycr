@@ -20,6 +20,8 @@ def get_pager():
     return os.environ.get('PAGER') or 'less'
 
 
+# pylint: disable=R0903
+# Disable "Too few public methods" (for all above classes)
 class Pager(object):
     """Display CONTENT in a pager, or on the standard output stream if pager is
     disabled.

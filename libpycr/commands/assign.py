@@ -5,10 +5,10 @@ Assign one or more reviewers to one or more Gerrit CL.
 import os
 import sys
 
-from libpycr.changes import tokenize_change_info, fetch_change_list_or_fail
+from libpycr.changes import fetch_change_list_or_fail
 from libpycr.exceptions import PyCRError
 from libpycr.gerrit import Gerrit
-from libpycr.utils.output import Formatter, Token
+from libpycr.utils.output import Formatter, Token, NEW_LINE
 from libpycr.utils.system import fail, warn
 
 
@@ -71,6 +71,56 @@ def parse_command_line(arguments):
     return fetch_change_list_or_fail(changes), to_add, to_del
 
 
+def tokenize(idx, change, added, deleted):
+    """
+    Token generator for the output.
+
+    PARAMETERS
+        idx: index of the change in the list of changes to fetch
+        change: the ChangeInfo corresponding to the change
+        added: the list of reviewers added
+        deleted: the list of reviewers deleted
+
+    RETURNS
+        a stream of tokens: tuple of (Token, string)
+    """
+
+    if idx:
+        yield NEW_LINE
+
+    for token in change.tokenize():
+        yield token
+
+    yield NEW_LINE
+    yield NEW_LINE
+
+    if not added and not deleted:
+        yield Token.Text, '# nothing to do (reviewers list already up-to-date)'
+        return
+
+    yield Token.Text, '# Reviewers updated:'
+
+    prefix = (Token.Text, '#     ')
+
+    for reviewer in added:
+        yield NEW_LINE
+        yield prefix
+        yield Token.Review.OK, '+'
+        yield Token.Whitespace, ' '
+
+        for token in reviewer.tokenize():
+            yield token
+
+    for reviewer in deleted:
+        yield NEW_LINE
+        yield prefix
+        yield Token.Review.KO, '-'
+        yield Token.Whitespace, ' '
+
+        for token in reviewer.tokenize():
+            yield token
+
+
 def main(arguments):
     """
     The entry point for the ASSIGN command.
@@ -87,11 +137,6 @@ def main(arguments):
     for idx, change in enumerate(changes):
         added = []
         deleted = []
-
-        tokens = []
-
-        if idx:
-            tokens.append(Formatter.newline_token())
 
         # Add reviewers
         for account_id in to_add:
@@ -117,34 +162,4 @@ def main(arguments):
                 warn('%s: cannot delete reviewer %s' %
                      (change.change_id[:9], account_id), why)
 
-        tokens.extend(tokenize_change_info(change))
-        tokens.append(Formatter.newline_token())
-
-        if not added and not deleted:
-            tokens.append(
-                (Token.Text,
-                 '# nothing to do (reviewers list already up-to-date)'))
-
-            print Formatter.format(tokens)
-            continue
-
-        tokens.append((Token.Text, '# Reviewers updated:'))
-
-        prefix = (Token.Text, '#     ')
-        for reviewer in added:
-            tokens.extend([
-                Formatter.newline_token(),
-                prefix,
-                (Token.Review.OK, '+'),
-                (Token.Text, ' %s' % reviewer)
-            ])
-
-        for reviewer in deleted:
-            tokens.extend([
-                Formatter.newline_token(),
-                prefix,
-                (Token.Review.KO, '-'),
-                (Token.Text, ' %s' % reviewer)
-            ])
-
-        print Formatter.format(tokens)
+        print Formatter.format(tokenize(idx, change, added, deleted))

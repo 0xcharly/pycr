@@ -5,10 +5,9 @@ Rebase a revision.
 import argparse
 import logging
 
-from libpycr.changes import tokenize_change_info
 from libpycr.exceptions import NoSuchChangeError, PyCRError
 from libpycr.gerrit import Gerrit
-from libpycr.utils.output import Formatter, Token
+from libpycr.utils.output import Formatter, Token, NEW_LINE
 from libpycr.utils.system import fail
 
 
@@ -36,6 +35,24 @@ def parse_command_line(arguments):
     return cmdline.change_id, cmdline.revision_id
 
 
+def tokenize(change):
+    """
+    Token generator for the output.
+
+    PARAMETERS
+        change: the ChangeInfo corresponding to the change
+
+    RETURNS
+        a stream of tokens: tuple of (Token, string)
+    """
+
+    for token in change.tokenize():
+        yield token
+
+    yield NEW_LINE
+    yield Token.Generic.Heading, 'commit: %s' % change.current_revision
+
+
 def main(arguments):
     """
     The entry point for the REBASE command.
@@ -59,10 +76,4 @@ def main(arguments):
     except PyCRError as why:
         fail('cannot rebase', why)
 
-    tokens = tokenize_change_info(change)
-    tokens.extend([
-        Formatter.newline_token(),
-        (Token.Generic.Heading, 'commit: %s' % change.current_revision)
-    ])
-
-    print Formatter.format(tokens)
+    print Formatter.format(tokenize(change))
