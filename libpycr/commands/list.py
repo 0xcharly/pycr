@@ -26,9 +26,11 @@ def parse_command_line(arguments):
     parser = argparse.ArgumentParser(description='display list of change(s)')
 
     parser.add_argument(
-        '--owner', default='self', help='the owner of the changes')
+        '--owner', default='self',
+        help='the owner of the changes (default: self)')
     parser.add_argument(
-        '--status', default='open', help='the status of the changes')
+        '--status', default='open',
+        help='the status of the changes (default: open)')
 
     cmdline = parser.parse_args(arguments)
 
