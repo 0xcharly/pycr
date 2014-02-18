@@ -48,8 +48,8 @@ def tokenize(change):
     yield NEW_LINE
     yield NEW_LINE
 
-    yield Token.Text, 'Change successfully merged ('
-    yield Token.Keyword, change.current_revision[:9]
+    yield Token.Text, 'Change successfully merged (revision: '
+    yield Token.Keyword, change.current_revision[:8]
     yield Token.Text, ')'
 
 
