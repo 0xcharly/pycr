@@ -8,7 +8,7 @@ import logging
 import sys
 
 from libpycr import get_version
-from libpycr.commands import assign, rebase, show, submit
+from libpycr.commands import assign, rebase, review, show, submit
 from libpycr.commands import list as list_command
 from libpycr.http import RequestFactory
 from libpycr.utils.output import Formatter
@@ -79,12 +79,17 @@ def build_cmdline_parser():
         help='add/delete reviewer to/from change(s)')
     cl_assign.set_defaults(command=assign.main)
 
+    # REVIEW command
+    cl_review = actions.add_parser(
+        'review', add_help=False, help='code-review a change')
+    cl_review.set_defaults(command=review.main)
+
     # REBASE command
     cl_rebase = actions.add_parser(
         'rebase', add_help=False, help='rebase a change')
     cl_rebase.set_defaults(command=rebase.main)
 
-    # Submit command
+    # SUBMIT command
     cl_submit = actions.add_parser(
         'submit', add_help=False, help='submit a change')
     cl_submit.set_defaults(command=submit.main)

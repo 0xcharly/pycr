@@ -23,7 +23,8 @@ def parse_command_line(arguments):
         a list of ChangeInfo
     """
 
-    parser = argparse.ArgumentParser(description='display list of change(s)')
+    parser = argparse.ArgumentParser(
+        description='List changes by owner and status.')
 
     parser.add_argument(
         '--owner', default='self',

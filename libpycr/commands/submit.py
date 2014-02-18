@@ -22,8 +22,9 @@ def parse_command_line(arguments):
         a tuple with a change_id and a revision_id
     """
 
-    parser = argparse.ArgumentParser(description='submit a change')
-    parser.add_argument('change_id', metavar='CL', help='the change to rebase')
+    parser = argparse.ArgumentParser(description='Submit a change.')
+    parser.add_argument('change_id', metavar='CL',
+                        help='Gerrit Code Review CL / CL range / Change-Id')
 
     cmdline = parser.parse_args(arguments)
 
@@ -47,10 +48,8 @@ def tokenize(change):
     yield NEW_LINE
     yield NEW_LINE
 
-    yield Token.Text, 'Change '
-    yield Token.Keyword, change.change_id[9:]
-    yield Token.Text, ' successfully merged ('
-    yield Token.Keyword, change.current_revision[8:]
+    yield Token.Text, 'Change successfully merged ('
+    yield Token.Keyword, change.current_revision[:9]
     yield Token.Text, ')'
 
 

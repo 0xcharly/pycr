@@ -8,7 +8,7 @@ import logging
 from libpycr.exceptions import NoSuchChangeError, ConflictError, RequestError
 from libpycr.exceptions import PyCRError, QueryError
 from libpycr.http import RequestFactory, BASE64
-from libpycr.struct import AccountInfo, ChangeInfo, ReviewInfo
+from libpycr.struct import AccountInfo, ChangeInfo, ReviewInfo, ReviewerInfo
 from libpycr.utils.system import confirm, info
 
 
@@ -95,6 +95,25 @@ class Api(object):
         """
 
         return '%s/patch' % Api.revisions(change_id, revision_id)
+
+    @staticmethod
+    def review(change_id, revision_id):
+        """
+        Return an URL to the Gerrit Code Review server. This URL allows queries
+        to set a review for the given revision of a change.
+
+        PARAMETERS
+            change_id: any identification number for the change (UUID,
+                Change-Id, or legacy numeric change ID)
+            revision_id: identifier that uniquely identifies one revision of a
+                change (current, a commit ID (SHA1) or abbreviated commit ID,
+                or a legacy numeric patch number)
+
+        RETURNS
+            the URL as a string
+        """
+
+        return '%s/review' % Api.revisions(change_id, revision_id)
 
     @staticmethod
     def rebase(change_id):
@@ -221,6 +240,9 @@ class Gerrit(object):
     # Logger
     log = logging.getLogger(__name__)
 
+    # Valid scores for a code review
+    SCORES = ('-2', '-1', '0', '+1', '+2')
+
     @staticmethod
     def get_all_statuses():
         """
@@ -346,6 +368,56 @@ class Gerrit(object):
         return patch
 
     @classmethod
+    def set_review(cls, score, message, change_id, revision_id='current'):
+        """
+        Send a POST request to the Gerrit Code Review server to review the
+        given change.
+
+        PARAMETERS
+            score: the score (-2, -1, 0, +1, +2)
+            message: the review message
+            change_id: any identification number for the change (UUID,
+                Change-Id, or legacy numeric change ID)
+            revision_id: identifier that uniquely identifies one revision of a
+                change (current, a commit ID (SHA1) or abbreviated commit ID,
+                or a legacy numeric patch number)
+
+        RETURNS
+            a ChangeInfo
+
+        RAISES
+            NoSuchChangeError if the change does not exist
+            PyCRError on any other error
+        """
+
+        cls.log.debug('Set review: %s (revision: %s)' %
+                      (change_id, revision_id))
+        cls.log.debug('Score:   %s', score)
+        cls.log.debug('Message: %s', message)
+
+        assert score in Gerrit.SCORES
+
+        payload = {
+            'message': message,
+            'labels': {'Code-Review': score}
+        }
+        headers = {'content-type': 'application/json'}
+
+        try:
+            endpoint = Api.review(change_id, revision_id)
+            _, review = RequestFactory.post(endpoint,
+                                            data=json.dumps(payload),
+                                            headers=headers)
+
+        except RequestError as why:
+            if why.status_code == 404:
+                raise NoSuchChangeError(change_id)
+
+            raise PyCRError('unexpected error', why)
+
+        return ReviewInfo.parse(review)
+
+    @classmethod
     def rebase(cls, change_id):
         """
         Send a POST request to the Gerrit Code Review server to rebase the
@@ -464,7 +536,7 @@ class Gerrit(object):
         # experiences show that it's not always the case, and that the change
         # owner can also be in the list although not a reviewers.
 
-        return [ReviewInfo.parse(r) for r in response if 'approvals' in r]
+        return [ReviewerInfo.parse(r) for r in response if 'approvals' in r]
 
     @classmethod
     def add_reviewer(cls, change_id, account_id, force=False):
@@ -561,7 +633,7 @@ class Gerrit(object):
 
             raise PyCRError('unexpected error', why)
 
-        return ReviewInfo.parse(response)
+        return ReviewerInfo.parse(response)
 
     @classmethod
     def delete_reviewer(cls, change_id, account_id):
@@ -603,4 +675,4 @@ class Gerrit(object):
             raise PyCRError('unexpected error', why)
 
         assert len(response) == 1
-        return ReviewInfo.parse(response[0])
+        return ReviewerInfo.parse(response[0])

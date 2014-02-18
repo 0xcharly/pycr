@@ -67,6 +67,9 @@ class Formatter(object):
     # The formatter name for disabled colored output
     NO_COLOR = 'null'
 
+    # The encoding to use
+    ENCODING = 'utf-8'
+
     # The formatter to use
     formatter = None
 
@@ -105,7 +108,7 @@ class Formatter(object):
                 name = 'terminal256'
 
             cls.formatter = get_formatter_by_name(name, style=OutputStyle,
-                                                  encoding='utf-8')
+                                                  encoding=Formatter.ENCODING)
 
     @classmethod
     def format(cls, tokens):
@@ -121,6 +124,22 @@ class Formatter(object):
 
         cls.__initialize()
         return pygments.format(tokens, cls.formatter)
+
+    @classmethod
+    def raw_format(cls, tokens):
+        """
+        Format the given list of tokens as a simple string (no color).
+
+        PARAMETERS
+            tokens: the input list of token to format
+
+        RETURNS
+            the formatted string
+        """
+
+        formatter = get_formatter_by_name(Formatter.NO_COLOR,
+                                          encoding=Formatter.ENCODING)
+        return pygments.format(tokens, formatter)
 
     @classmethod
     def tokenize_diff(cls, diff):

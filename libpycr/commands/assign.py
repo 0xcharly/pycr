@@ -20,10 +20,10 @@ def display_help():
     module to parse the command-line arguments.
     """
 
-    buf = ['usage: cl [-h] CL [CL ...] [+REVIEWER [+REVIEWER ...]]']
-    buf.append('                           [-REVIEWER [-REVIEWER ...]]')
+    buf = ['usage: cl assign [-h] CL [CL ...] [+REVIEWER [+REVIEWER ...]]']
+    buf.append('                                  [-REVIEWER [-REVIEWER ...]]')
     buf.append('')
-    buf.append('add/delete reviewer(s) to change(s)')
+    buf.append('Add or delete reviewer(s) to one or more changes.')
     buf.append('')
     buf.append('positional arguments:')
     buf.append('  CL             Gerrit Code Review CL / CL range / Change-Id')

@@ -25,7 +25,7 @@ def parse_command_line(arguments):
     """
 
     parser = argparse.ArgumentParser(
-        description='display code reviews for change(s)')
+        description='Display code review scores for change(s).')
     expect_changes_as_positional(parser)
 
     cmdline = parser.parse_args(arguments)

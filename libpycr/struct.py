@@ -19,6 +19,16 @@ class Info(object):
     def __str__(self):
         return Formatter.format(self.tokenize())
 
+    def raw_str(self):
+        """
+        Return a simple string (no formatting).
+
+        RETURNS
+            the non-decorated version of __str__
+        """
+
+        return Formatter.raw_format(self.tokenize())
+
     @abstractmethod
     def tokenize(self):
         """
@@ -258,7 +268,11 @@ class ChangeInfo(Info):
 
         yield Token.Generic.Heading, 'change-id %s' % self.change_id
         yield NEW_LINE
-        yield Token.Text, 'Owner:   %s' % self.owner
+
+        yield Token.Text, 'Owner:   '
+        for token in self.owner.tokenize():
+            yield token
+
         yield NEW_LINE
         yield Token.Text, 'Subject: %s' % self.subject
 
@@ -304,8 +318,8 @@ class ChangeInfo(Info):
         return change
 
 
-class ReviewInfo(Info):
-    """A review object."""
+class ReviewerInfo(Info):
+    """A reviewer object."""
 
     def __init__(self):
         self.reviewer = None
@@ -338,16 +352,62 @@ class ReviewInfo(Info):
     @staticmethod
     def parse(data):
         """
+        Initialize the ReviewerInfo object and return it.
+
+        PARAMETERS
+            data: the JSON representation of the reviewer as emitted by the
+                Gerrit Code Review server (ReviewerInfo)
+
+        RETURNS
+            a ReviewerInfo
+        """
+
+        reviewer = ReviewerInfo()
+
+        reviewer.reviewer = AccountInfo.parse(data)
+        reviewer.approvals = data['approvals'].items()
+
+        return reviewer
+
+
+class ReviewInfo(Info):
+    """A review object."""
+
+    def __init__(self):
+        self.labels = None
+
+    def tokenize(self):
+        """Override."""
+
+        # In a ReviewInfo record, scores are numbers: we need to convert them
+        # to string
+        for label, score in self.labels:
+            if score in (1, 2):
+                token = Token.Review.OK
+                score = '+%d' % score
+            elif score in (-1, -2):
+                token = Token.Review.KO
+            else:
+                token = Token.Review.NONE
+
+            yield Token.Text, '    %s: ' % label
+            yield token, str(score)
+            yield NEW_LINE
+
+    @staticmethod
+    def parse(data):
+        """
         Initialize the ReviewInfo object and return it.
 
         PARAMETERS
             data: the JSON representation of the review as emitted by the
-                Gerrit Code Review server (ReviewerInfo)
+                Gerrit Code Review server (ReviewInfo)
+
+        RETURNS
+            a ReviewInfo
         """
 
         review = ReviewInfo()
-
-        review.reviewer = AccountInfo.parse(data)
-        review.approvals = data['approvals'].items()
+        review.labels = data['labels'].items()
 
         return review
