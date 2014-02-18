@@ -5,7 +5,7 @@ This module encapsulate the Gerrit Code Review HTTP API protocol.
 import json
 import logging
 
-from libpycr.exceptions import NoSuchChangeError, RebaseError, RequestError
+from libpycr.exceptions import NoSuchChangeError, ConflictError, RequestError
 from libpycr.exceptions import PyCRError, QueryError
 from libpycr.http import RequestFactory, BASE64
 from libpycr.struct import AccountInfo, ChangeInfo, ReviewInfo
@@ -97,7 +97,7 @@ class Api(object):
         return '%s/patch' % Api.revisions(change_id, revision_id)
 
     @staticmethod
-    def rebase_revision(change_id, revision_id):
+    def rebase(change_id):
         """
         Return an URL to the Gerrit Code Review server. This URL allows queries
         to rebase the given change.
@@ -105,15 +105,28 @@ class Api(object):
         PARAMETERS
             change_id: any identification number for the change (UUID,
                 Change-Id, or legacy numeric change ID)
-            revision_id: identifier that uniquely identifies one revision of a
-                change (current, a commit ID (SHA1) or abbreviated commit ID,
-                or a legacy numeric patch number)
 
         RETURNS
             the URL as a string
         """
 
-        return '%s/rebase' % Api.revisions(change_id, revision_id)
+        return '%s/rebase' % Api.changes(change_id)
+
+    @staticmethod
+    def submit(change_id):
+        """
+        Return an URL to the Gerrit Code Review server. This URL allows queries
+        to submit the given change.
+
+        PARAMETERS
+            change_id: any identification number for the change (UUID,
+                Change-Id, or legacy numeric change ID)
+
+        RETURNS
+            the URL as a string
+        """
+
+        return '%s/submit' % Api.changes(change_id)
 
     @staticmethod
     def reviewers(change_id):
@@ -270,7 +283,7 @@ class Gerrit(object):
                 Change-Id, or legacy numeric change ID
 
         RETURNS
-            a ChangeInfo object
+            a ChangeInfo
 
         RAISES
             NoSuchChangeError if the change does not exist
@@ -281,7 +294,12 @@ class Gerrit(object):
 
         try:
             endpoint = Api.detailed_changes(change_id)
-            _, response = RequestFactory.get(endpoint)
+
+            # CURRENT_REVISION describe the current revision (patch set) of the
+            # change, including the commit SHA-1 and URLs to fetch from
+            extra_params = {'o': 'CURRENT_REVISION'}
+
+            _, response = RequestFactory.get(endpoint, params=extra_params)
 
         except RequestError as why:
             if why.status_code == 404:
@@ -328,28 +346,28 @@ class Gerrit(object):
         return patch
 
     @classmethod
-    def rebase(cls, change_id, revision_id='current'):
+    def rebase(cls, change_id):
         """
-        Send a GET request to the Gerrit Code Review server to rebase the
+        Send a POST request to the Gerrit Code Review server to rebase the
         given change.
 
         PARAMETERS
             change_id: any identification number for the change (UUID,
                 Change-Id, or legacy numeric change ID)
-            revision_id: identifier that uniquely identifies one revision of a
-                change (current, a commit ID (SHA1) or abbreviated commit ID,
-                or a legacy numeric patch number)
+
+        RETURNS
+            a ChangeInfo
 
         RAISES
             NoSuchChangeError if the change does not exist
+            ConflictError if could not submit the change
             PyCRError on any other error
         """
 
-        cls.log.debug('rebase: %s (revision: %s)' % (change_id, revision_id))
+        cls.log.debug('rebase: %s' % change_id)
 
         try:
-            endpoint = Api.rebase_revision(change_id, revision_id)
-            _, change = RequestFactory.post(endpoint)
+            _, change = RequestFactory.post(Api.rebase(change_id))
 
         except RequestError as why:
             if why.status_code == 404:
@@ -358,11 +376,53 @@ class Gerrit(object):
             if why.status_code == 409:
                 # There was a conflict rebasing the change
                 # Error message is return as PLAIN text
-                raise RebaseError(why.response.text.strip())
+                raise ConflictError(why.response.text.strip())
 
             raise PyCRError('unexpected error', why)
 
         return ChangeInfo.parse(change)
+
+    @classmethod
+    def submit(cls, change_id):
+        """
+        Send a POST request to the Gerrit Code Review server to submit the
+        given change.
+
+        PARAMETERS
+            change_id: any identification number for the change (UUID,
+                Change-Id, or legacy numeric change ID)
+
+        RETURNS
+            True if the change was successfully merged, False otherwise
+
+        RAISES
+            NoSuchChangeError if the change does not exist
+            ConflictError if could not submit the change
+            PyCRError on any other error
+        """
+
+        cls.log.debug('submit: %s' % change_id)
+
+        payload = {'wait_for_merge': True}
+        headers = {'content-type': 'application/json'}
+
+        try:
+            _, change = RequestFactory.post(Api.submit(change_id),
+                                            data=json.dumps(payload),
+                                            headers=headers)
+
+        except RequestError as why:
+            if why.status_code == 404:
+                raise NoSuchChangeError(change_id)
+
+            if why.status_code == 409:
+                # There was a conflict rebasing the change
+                # Error message is return as PLAIN text
+                raise ConflictError(why.response.text.strip())
+
+            raise PyCRError('unexpected error', why)
+
+        return ChangeInfo.parse(change).status == ChangeInfo.MERGED
 
     @classmethod
     def get_reviews(cls, change_id):
@@ -375,7 +435,7 @@ class Gerrit(object):
                 Change-Id, or legacy numeric change ID)
 
         RETURNS
-            a Change object
+            a ChangeInfo
 
         RAISES
             NoSuchChangeError if the change does not exist
@@ -514,6 +574,9 @@ class Gerrit(object):
                 Change-Id, or legacy numeric change ID)
             account_id: any identification string for an account (name,
                 username, email)
+
+        RETURNS
+            a ReviewInfo
 
         RAISES
             PyCRError if the Gerrit server returns an error

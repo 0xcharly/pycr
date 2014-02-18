@@ -8,7 +8,7 @@ import logging
 import sys
 
 from libpycr import get_version
-from libpycr.commands import assign, rebase, show
+from libpycr.commands import assign, rebase, show, submit
 from libpycr.commands import list as list_command
 from libpycr.http import RequestFactory
 from libpycr.utils.output import Formatter
@@ -81,8 +81,13 @@ def build_cmdline_parser():
 
     # REBASE command
     cl_rebase = actions.add_parser(
-        'rebase', add_help=False, help='rebase a revision')
+        'rebase', add_help=False, help='rebase a change')
     cl_rebase.set_defaults(command=rebase.main)
+
+    # Submit command
+    cl_submit = actions.add_parser(
+        'submit', add_help=False, help='submit a change')
+    cl_submit.set_defaults(command=submit.main)
 
     return parser
 

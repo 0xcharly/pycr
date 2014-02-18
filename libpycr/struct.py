@@ -238,6 +238,9 @@ class RevisionInfo(Info):
 class ChangeInfo(Info):
     """A change object."""
 
+    MERGED = 'MERGED'
+    SUBMITTED = 'SUBMITTED'
+
     def __init__(self):
         self.uuid = None
         self.change_id = None
@@ -245,6 +248,7 @@ class ChangeInfo(Info):
         self.project = None
         self.branch = None
         self.subject = None
+        self.status = None
         self.owner = None
         self.revisions = None
         self.current_revision = None
@@ -281,6 +285,7 @@ class ChangeInfo(Info):
         change.subject = data['subject']
         change.owner = AccountInfo.parse(data['owner'])
 
+        change.status = data.get('status', None)
         change.current_revision = data.get('current_revision', None)
 
         if 'revisions' in data:
@@ -288,9 +293,12 @@ class ChangeInfo(Info):
 
             for commit_id, details in data['revisions'].items():
                 rev = RevisionInfo.parse(details)
+
                 # The commit ID is not specified twice in the commit detail:
                 # it needs to be set manually
-                rev.commit.commit_id = commit_id
+                if rev.commit is not None:
+                    rev.commit.commit_id = commit_id
+
                 change.revisions[commit_id] = rev
 
         return change

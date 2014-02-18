@@ -1,5 +1,5 @@
 """
-Rebase a change.
+Submit a change.
 """
 
 import argparse
@@ -13,7 +13,7 @@ from libpycr.utils.system import fail
 
 def parse_command_line(arguments):
     """
-    Parse the REBASE command command-line arguments.
+    Parse the SUBMIT command command-line arguments.
 
     PARAMETERS
         arguments: a list of command-line arguments to parse
@@ -22,7 +22,7 @@ def parse_command_line(arguments):
         a tuple with a change_id and a revision_id
     """
 
-    parser = argparse.ArgumentParser(description='rebase a change')
+    parser = argparse.ArgumentParser(description='submit a change')
     parser.add_argument('change_id', metavar='CL', help='the change to rebase')
 
     cmdline = parser.parse_args(arguments)
@@ -49,7 +49,7 @@ def tokenize(change):
 
     yield Token.Text, 'Change '
     yield Token.Keyword, change.change_id[9:]
-    yield Token.Text, ' successfully rebased (new revision: '
+    yield Token.Text, ' successfully merged ('
     yield Token.Keyword, change.current_revision[8:]
     yield Token.Text, ')'
 
@@ -68,13 +68,16 @@ def main(arguments):
     change_id = parse_command_line(arguments)
 
     try:
-        change = Gerrit.rebase(change_id)
+        change = Gerrit.get_change(change_id)
+
+        if not Gerrit.submit(change.uuid):
+            fail('submit could not be merged')
 
     except NoSuchChangeError as why:
         log.debug(str(why))
         fail('invalid change')
 
     except PyCRError as why:
-        fail('cannot rebase', why)
+        fail('cannot submit', why)
 
     print Formatter.format(tokenize(change))

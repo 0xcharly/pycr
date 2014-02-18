@@ -30,8 +30,8 @@ class QueryError(PyCRError):
     pass
 
 
-class RebaseError(PyCRError):
-    """Exception raised on failed attempt to rebase a revision."""
+class ConflictError(PyCRError):
+    """Exception raised on failed attempt to rebase, submit, ... a revision."""
     pass
 
 
