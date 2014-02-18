@@ -7,6 +7,7 @@ import logging
 
 from libpycr.exceptions import NoSuchChangeError, PyCRError
 from libpycr.gerrit import Gerrit
+from libpycr.pager import Pager
 from libpycr.utils.output import Formatter, Token, NEW_LINE
 from libpycr.utils.system import fail
 
@@ -35,7 +36,7 @@ def parse_command_line(arguments):
     return cmdline.change_id, cmdline.revision_id
 
 
-def tokenize(change):
+def tokenize(change, patch):
     """
     Token generator for the output.
 
@@ -50,7 +51,15 @@ def tokenize(change):
         yield token
 
     yield NEW_LINE
-    yield Token.Generic.Heading, 'commit: %s' % change.current_revision
+    yield NEW_LINE
+
+    yield Token.Text, 'new commit: %s' % change.current_revision
+
+    yield NEW_LINE
+    yield NEW_LINE
+
+    for token in Formatter.tokenize_diff(patch):
+        yield token
 
 
 def main(arguments):
@@ -68,6 +77,7 @@ def main(arguments):
 
     try:
         change = Gerrit.rebase(change_id, revision_id)
+        patch = Gerrit.get_patch(change.uuid)
 
     except NoSuchChangeError as why:
         log.debug(str(why))
@@ -76,4 +86,5 @@ def main(arguments):
     except PyCRError as why:
         fail('cannot rebase', why)
 
-    print Formatter.format(tokenize(change))
+    with Pager(command='rebase'):
+        print Formatter.format(tokenize(change, patch))

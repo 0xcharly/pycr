@@ -223,7 +223,7 @@ class RevisionInfo(Info):
 
         revision.draft = data.get('draft', False)
         revision.has_draft_comments = data.get('has_draft_comments', False)
-        revision.number = data['number']
+        revision.number = data['_number']
 
         # self.fetch = FetchInfo.parse(data['fetch'])
         # self.files = FileInfo.parse(data['files'])
