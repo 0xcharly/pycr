@@ -55,7 +55,7 @@ def tokenize(change):
 
 def main(arguments):
     """
-    The entry point for the REBASE command.
+    The entry point for the SUBMIT command.
 
     Rebase revision.
 

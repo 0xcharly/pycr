@@ -60,7 +60,7 @@ def tokenize(change, review):
 
 def main(arguments):
     """
-    The entry point for the REBASE command.
+    The entry point for the REVIEW command.
 
     Rebase revision.
 
