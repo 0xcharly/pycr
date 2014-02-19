@@ -8,10 +8,14 @@ import logging
 import sys
 
 from libpycr import get_version
-from libpycr.commands import assign, rebase, review, show, submit
-from libpycr.commands import list as list_command
+from libpycr.commands import command
 from libpycr.http import RequestFactory
+from libpycr.utils.introspect import get_all_subclasses
 from libpycr.utils.output import Formatter
+
+# pylint: disable=W0401
+# Disable "Wildcard import"
+from libpycr.commands import *  # NOQA
 
 
 def build_cmdline_parser():
@@ -64,64 +68,41 @@ def build_cmdline_parser():
     cl_help.add_argument(
         'command', nargs='?', help='display help for that command')
 
-    # LIST command
-    cl_list = actions.add_parser('list', add_help=False, help='list change(s)')
-    cl_list.set_defaults(command=list_command.main)
-
-    # SHOW command
-    cl_show = actions.add_parser(
-        'show', add_help=False, help='display code reviews for change(s)')
-    cl_show.set_defaults(command=show.main)
-
-    # ASSIGN command
-    cl_assign = actions.add_parser(
-        'assign', add_help=False, prefix_chars='-+',
-        help='add/delete reviewer to/from change(s)')
-    cl_assign.set_defaults(command=assign.main)
-
-    # REVIEW command
-    cl_review = actions.add_parser(
-        'review', add_help=False, help='code-review a change')
-    cl_review.set_defaults(command=review.main)
-
-    # REBASE command
-    cl_rebase = actions.add_parser(
-        'rebase', add_help=False, help='rebase a change')
-    cl_rebase.set_defaults(command=rebase.main)
-
-    # SUBMIT command
-    cl_submit = actions.add_parser(
-        'submit', add_help=False, help='submit a change')
-    cl_submit.set_defaults(command=submit.main)
+    # Register all commands
+    for cmd_class in get_all_subclasses(command.Command):
+        cmd = cmd_class()
+        subparser = actions.add_parser(cmd.name, add_help=False,
+                                       help=cmd.description)
+        subparser.set_defaults(command=cmd)
 
     return parser
 
 
-def display_help(command=None):
+def display_help(cmd_name=None):
     """
     Display the help message, including the program usage and information about
     the arguments.
 
     PARAMETERS
-        command: optional command for which to display the help message.
+        cmd_name: optional command name for which to display the help message.
             displays the program-wide help if None.
     """
 
     parser = build_cmdline_parser()
 
-    if command is None:
-        # cl --help case
+    if cmd_name is None:
+        # %(prog)s --help case
         sys.exit(parser.format_help())
 
     else:
-        cmdline = parser.parse_args([command])
+        cmdline = parser.parse_args([cmd_name])
 
         if cmdline.command:
-            # cl help assign
-            cmdline.command(['--help'])
+            # %(prog)s help assign
+            cmdline.command.run(['--help'])
         else:
-            # cl help --help case
-            parser.parse_args([command, '--help'])
+            # %(prog)s help --help case
+            parser.parse_args([cmd_name, '--help'])
 
 
 def parse_command_line(argv):

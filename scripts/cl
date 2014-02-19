@@ -31,7 +31,7 @@ def cl_main(arguments):
         command, command_arguments = parse_command_line(arguments)
 
         # Execute the requested command
-        command(command_arguments)
+        command.run(command_arguments)
 
     except PyCRError as why:
         sys.exit(format_message(str(why), prefix='fatal'))
