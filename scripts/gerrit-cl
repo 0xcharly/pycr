@@ -4,6 +4,9 @@
 Command-line tool to interogate an instance of a Gerrit Code Review server.
 """
 
+# pylint: disable=C0103
+# Disable "Invalid module name" (this is not a module but a script)
+
 import os
 import sys
 
