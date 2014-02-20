@@ -32,13 +32,8 @@ def strip_comments(data, line_comment='#'):
         the input string striped from comments
     """
 
-    lines = []
-
-    for line in data.splitlines():
-        idx = line.find(line_comment)
-        lines.append((line if idx == -1 else line[:idx]).strip())
-
-    return '\n'.join(lines).strip()
+    return '\n'.join([l for l in data.splitlines()
+                      if l[0] != line_comment]).strip()
 
 
 def raw_input_editor(default=None):
