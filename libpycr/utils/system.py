@@ -87,6 +87,34 @@ def confirm(question):
     return answer in ('y', 'yes')
 
 
+def ask(question, choices=None):
+    """
+    Request user input to the given question. If CHOICES is not None, display
+    the list of choices and expect an index.
+
+    PARAMETERS
+        question: question to ask the user
+        choices: if not None, the allowable values for the answer
+
+    RETURNS
+        True if the answer is YES, False otherwise
+    """
+
+    if choices is None:
+        return raw_input('%s: ' % question)
+
+    while True:
+        answer = raw_input('%s: ' % question)
+
+        if answer in choices:
+            break
+
+        print >> sys.stderr, ('Invalid input (expected %s)' %
+                              ', '.join(choices))
+
+    return answer
+
+
 def reverse_find_file(filename, origin=os.getcwd(), ignores=None):
     """
     Look for a given filename in the current directory. Try the parent

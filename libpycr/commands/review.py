@@ -11,7 +11,7 @@ from libpycr.editor import raw_input_editor, strip_comments
 from libpycr.exceptions import NoSuchChangeError, PyCRError
 from libpycr.gerrit import Gerrit
 from libpycr.utils.output import Formatter, NEW_LINE
-from libpycr.utils.system import fail
+from libpycr.utils.system import ask, fail
 
 
 class Review(command.Command):
@@ -41,7 +41,7 @@ class Review(command.Command):
             'change_id', metavar='CL',
             help='Gerrit Code Review CL / CL range / Change-Id')
         parser.add_argument(
-            'score', help='the score of the review', default='0',
+            'score', help='the score of the review', default=None,
             choices=Gerrit.SCORES, nargs='?')
         parser.add_argument('-m', '--message', help='the review comment')
 
@@ -93,6 +93,9 @@ class Review(command.Command):
 
                 message = raw_input_editor(os.linesep.join(initial_content))
                 message = strip_comments(message)
+
+            if score is None:
+                score = ask('Please enter your review score', Gerrit.SCORES)
 
             review = Gerrit.set_review(score, message, change.uuid)
 
