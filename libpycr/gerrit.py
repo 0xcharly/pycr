@@ -182,7 +182,8 @@ class Api(object):
         return '%s/%s' % (Api.reviewers(change_id), account_id)
 
     @staticmethod
-    def search_query_attr(status=None, owner=None, reviewer=None):
+    def search_query_attr(status=None, owner=None, reviewer=None,
+                          watched=None):
         """
         Create a search query compatible with Gerrit Code Review queries.
 
@@ -190,6 +191,7 @@ class Api(object):
             status: the status of changes
             owner: the owner of changes
             reviewer: the reviewer of changes
+            watched: whether the change should be in the watched list or not
 
         RETURNS
             the query parameters as a string
@@ -206,10 +208,13 @@ class Api(object):
         if reviewer is not None:
             buf.append('reviewer:%s' % reviewer)
 
+        if watched is not None:
+            buf.append('is:watched')
+
         return '+'.join(buf)
 
     @staticmethod
-    def search_query(status=None, owner=None, reviewer=None):
+    def search_query(status=None, owner=None, reviewer=None, watched=None):
         """
         Return an URL to the Gerrit Code Review server. This URL contains the
         query to perform.
@@ -229,7 +234,8 @@ class Api(object):
 
         return '%s?q=%s' % (Api.changes_query(),
                             Api.search_query_attr(status=status, owner=owner,
-                                                  reviewer=reviewer))
+                                                  reviewer=reviewer,
+                                                  watched=watched))
 
 
 class Gerrit(object):
@@ -255,6 +261,43 @@ class Gerrit(object):
         # List of valid Gerrit Code Review statuses
         return ('open', 'merged', 'abandoned', 'closed', 'reviewed',
                 'submitted')
+
+    @classmethod
+    def list_watched_changes(cls, status='open'):
+        """
+        Send a GET request to the Gerrit Code Review server to fetch the list
+        of changes with the given STATUS and from the given OWNER.
+
+        PARAMETERS
+            status: the status of the change (open, merged, ...)
+            owner: the account_id of the owner of the changes
+
+        RETURNS
+            a list of ChangeInfo
+
+        RAISES
+            NoSuchChangeError if no change match the query criterion
+            PyCRError on any error
+        """
+
+        cls.log.debug('Watched changes lookup with status:%s' % status)
+
+        try:
+            endpoint = Api.search_query(status=status, watched=True)
+
+            # DETAILED_ACCOUNTS option ensures that the owner email address is
+            # sent in the response
+            extra_params = {'o': 'DETAILED_ACCOUNTS'}
+
+            _, response = RequestFactory.get(endpoint, params=extra_params)
+
+        except RequestError as why:
+            if why.status_code == 404:
+                raise QueryError('no result for query criterion')
+
+            raise PyCRError('cannot fetch change details', why)
+
+        return [ChangeInfo.parse(c) for c in response]
 
     @classmethod
     def list_changes(cls, status='open', owner='self'):

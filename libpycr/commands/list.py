@@ -38,13 +38,17 @@ class List(command.Command):
 
         parser = argparse.ArgumentParser(
             description='List changes by owner and status.')
-
-        parser.add_argument(
-            '--owner', default='self',
-            help='the owner of the changes (default: self)')
         parser.add_argument(
             '--status', default='open',
             help='the status of the changes (default: open)')
+
+        exclusive = parser.add_mutually_exclusive_group()
+        exclusive.add_argument(
+            '--owner', default='self',
+            help='the owner of the changes (default: self)')
+        exclusive.add_argument(
+            '--watched', default=False, action='store_true',
+            help='list only watched changes')
 
         cmdline = parser.parse_args(arguments)
 
@@ -54,7 +58,7 @@ class List(command.Command):
                  ', '.join(["'%s'" % st for st in Gerrit.get_all_statuses()])))
 
         # Fetch changes details
-        return cmdline.owner, cmdline.status
+        return cmdline.owner, cmdline.status, cmdline.watched
 
     @staticmethod
     def tokenize(idx, change):
@@ -78,10 +82,13 @@ class List(command.Command):
     def run(self, arguments, *args, **kwargs):
         """Inherited."""
 
-        owner, status = List.parse_command_line(arguments)
+        owner, status, watched = List.parse_command_line(arguments)
 
         try:
-            changes = Gerrit.list_changes(status=status, owner=owner)
+            if watched:
+                changes = Gerrit.list_watched_changes(status=status)
+            else:
+                changes = Gerrit.list_changes(status=status, owner=owner)
 
         except QueryError as why:
             # No result, not an error
