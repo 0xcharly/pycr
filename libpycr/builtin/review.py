@@ -6,15 +6,15 @@ import argparse
 import logging
 import os
 
-from libpycr.commands import command
 from libpycr.editor import raw_input_editor, strip_comments
 from libpycr.exceptions import NoSuchChangeError, PyCRError
 from libpycr.gerrit import Gerrit
+from libpycr.meta import Builtin
 from libpycr.utils.output import Formatter, NEW_LINE
 from libpycr.utils.system import ask, fail
 
 
-class Review(command.Command):
+class Review(Builtin):
     """Implement the REVIEW command."""
 
     log = logging.getLogger(__name__)

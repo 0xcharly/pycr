@@ -1,14 +1,12 @@
-"""
-This module provides the top level Command abstract class.
-"""
+"""Meta classes declaration."""
 
 from abc import ABCMeta, abstractmethod, abstractproperty
 
 
 # pylint: disable=R0921
 # Disable "Abstract class not referenced"
-class Command(object):
-    """A Command abstract class."""
+class Builtin(object):
+    """A Builtin abstract class."""
 
     __metaclass__ = ABCMeta
 

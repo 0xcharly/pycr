@@ -5,14 +5,14 @@ Submit a change.
 import argparse
 import logging
 
-from libpycr.commands import command
 from libpycr.exceptions import NoSuchChangeError, PyCRError
 from libpycr.gerrit import Gerrit
+from libpycr.meta import Builtin
 from libpycr.utils.output import Formatter, Token, NEW_LINE
 from libpycr.utils.system import fail
 
 
-class Submit(command.Command):
+class Submit(Builtin):
     """Implement the SUBMIT command."""
 
     # Logger for this command

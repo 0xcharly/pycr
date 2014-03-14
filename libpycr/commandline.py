@@ -8,14 +8,14 @@ import logging
 import sys
 
 from libpycr import get_version
-from libpycr.commands import command
 from libpycr.http import RequestFactory
+from libpycr.meta import Builtin
 from libpycr.utils.introspect import get_all_subclasses
 from libpycr.utils.output import Formatter
 
 # pylint: disable=W0401
 # Disable "Wildcard import"
-from libpycr.commands import *  # NOQA
+from libpycr.builtin import *  # NOQA
 
 
 def build_cmdline_parser():
@@ -58,18 +58,17 @@ def build_cmdline_parser():
         choices=sum([f.aliases for f in Formatter.get_all()], []),
         help=argparse.SUPPRESS)
 
-    # Register sub-commands
-    actions = parser.add_subparsers(
-        dest='subcommand', help='available subcommands')
+    # Register builtins
+    actions = parser.add_subparsers(dest='builtins', help='available builtins')
 
     # HELP command
     cl_help = actions.add_parser(
-        'help', help='display help information about %(prog)s sub-commands')
+        'help', help='display help information about %(prog)s builtins')
     cl_help.add_argument(
-        'command', nargs='?', help='display help for that command')
+        'builtin', nargs='?', help='display help for that builtin')
 
-    # Register all commands
-    for cmd_class in get_all_subclasses(command.Command):
+    # Register all builtins
+    for cmd_class in get_all_subclasses(Builtin):
         cmd = cmd_class()
         subparser = actions.add_parser(cmd.name, add_help=False,
                                        help=cmd.description)
@@ -130,8 +129,8 @@ def parse_command_line(argv):
             level=logging.DEBUG)
 
     # Display help if requested (display_help exits the program)
-    if cmdline.subcommand == 'help':
-        display_help(cmdline.command)
+    if cmdline.builtins == 'help':
+        display_help(cmdline.builtin)
 
     # Configure the HTTP request engine
     RequestFactory.set_unsecure_connection(cmdline.unsecure)

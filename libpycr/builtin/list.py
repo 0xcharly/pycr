@@ -5,15 +5,15 @@ Display the list of changes given the input criterion.
 import argparse
 import logging
 
-from libpycr.commands import command
 from libpycr.exceptions import QueryError, PyCRError
 from libpycr.gerrit import Gerrit
+from libpycr.meta import Builtin
 from libpycr.pager import Pager
 from libpycr.utils.output import Formatter, NEW_LINE
 from libpycr.utils.system import fail
 
 
-class List(command.Command):
+class List(Builtin):
     """Implement the LIST command."""
 
     # Logger for this command

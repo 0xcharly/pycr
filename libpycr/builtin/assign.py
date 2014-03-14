@@ -5,15 +5,15 @@ Assign one or more reviewers to one or more Gerrit CL.
 import os
 import sys
 
-from libpycr.commands import command
 from libpycr.changes import fetch_change_list_or_fail
 from libpycr.exceptions import PyCRError
 from libpycr.gerrit import Gerrit
+from libpycr.meta import Builtin
 from libpycr.utils.output import Formatter, Token, NEW_LINE
 from libpycr.utils.system import fail, warn
 
 
-class Assign(command.Command):
+class Assign(Builtin):
     """Implement the ASSIGN command."""
 
     @property

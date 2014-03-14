@@ -5,16 +5,16 @@ Display the code review scores for one or more Gerrit CL.
 import argparse
 
 from libpycr.changes import fetch_change_list_or_fail
-from libpycr.commands import command
 from libpycr.exceptions import PyCRError
 from libpycr.gerrit import Gerrit
+from libpycr.meta import Builtin
 from libpycr.pager import Pager
 from libpycr.utils.commandline import expect_changes_as_positional
 from libpycr.utils.output import Formatter, NEW_LINE
 from libpycr.utils.system import warn
 
 
-class Show(command.Command):
+class Show(Builtin):
     """Implement the SHOW command."""
 
     @property

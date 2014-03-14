@@ -1,4 +1,4 @@
-"""Contains the CL tool commands."""
+"""Contains the CL tool builtins."""
 
 
 def __find_all_modules():
@@ -13,7 +13,7 @@ def __find_all_modules():
 
     for fname in os.listdir(os.path.dirname(__file__)):
         base, ext = os.path.splitext(fname)
-        if ext == '.pyc' and base != this:
+        if ext != '.pyc' and not base.startswith('.') and base != this:
             yield base
 
 __all__ = list(__find_all_modules())
