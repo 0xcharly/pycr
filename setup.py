@@ -25,7 +25,7 @@ setup(
     author_email='jcd.delay@gmail.com',
     license='Apache v2',
     description='A Command-line Interface to Gerrit Code Review v2.8',
-    packages=['libpycr', 'libpycr.builtin', 'libpycr.utils'],
+    packages=['libpycr', 'libpycr.builtin', 'libpycr.meta', 'libpycr.utils'],
     requires=['requests', 'pygments'],
     scripts=[os.path.join('scripts', 'gerrit-cl')],
 )
