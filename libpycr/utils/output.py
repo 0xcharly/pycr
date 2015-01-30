@@ -1,6 +1,4 @@
-"""
-This module contains the input / output formatting routines.
-"""
+"""This module contains the input / output formatting routines"""
 
 import os
 import re
@@ -21,16 +19,13 @@ NEW_LINE = (Token.Whitespace, os.linesep)
 
 
 def update_dict(origin, extras):
-    """
-    Update the content of ORIGIN with the content of EXTRAS, and return the
-    former.
+    """Update the content of ORIGIN with the content of EXTRAS
 
-    PARAMETERS
-        origin: the dictionary to update
-        extras: the dictionary to update ORIGIN with
-
-    RETURNS
-        an updated copy of ORIGIN
+    :param origin: the dictionary to update
+    :type origin: dict
+    :param extras: the dictionary to update ORIGIN with
+    :type extras: dict
+    :rtype: dict
     """
 
     final = origin.copy()
@@ -41,7 +36,7 @@ def update_dict(origin, extras):
 # pylint: disable=R0903
 # Disable "Too few public methods"
 class OutputStyle(Style):
-    """The pygments style to apply to the output."""
+    """The pygments style to apply to the output"""
 
     default_style = ''
     native = get_style_by_name('native')
@@ -59,7 +54,7 @@ class OutputStyle(Style):
 
 
 class Formatter(object):
-    """Output formatter."""
+    """Output formatter"""
 
     # Heading regex to match a Gerrit diff
     DIFF_HEADING_RE = re.compile('From (?P<commit>[0-9a-f]{8,40}) .*')
@@ -75,31 +70,26 @@ class Formatter(object):
 
     @staticmethod
     def get_all():
-        """
-        List all available formatters.
+        """List all available formatters
 
-        RETURNS
-            a list of string containing the label of all formaters
+        :rtype: list[str]
         """
 
         return get_all_formatters()
 
     @classmethod
     def set_formatter(cls, formatter_name='terminal256'):
-        """
-        Set the formatter to use for the output.
+        """Set the formatter to use for the output
 
-        PARAMETERS
-            formatter_name: the name of the Pygments formatter
+        :param formatter_name: the name of the Pygments formatter
+        :type formatter_name: str
         """
 
         Config.set('core.formatter', formatter_name)
 
     @classmethod
     def __initialize(cls):
-        """
-        Initialize the object if needed.
-        """
+        """Initialize the object if needed"""
 
         if cls.formatter is None:
             name = Config.get('core.color', Formatter.NO_COLOR)
@@ -112,14 +102,11 @@ class Formatter(object):
 
     @classmethod
     def format(cls, tokens):
-        """
-        Format the given list of tokens.
+        """Format the given list of tokens
 
-        PARAMETERS
-            tokens: the input list of token to format
-
-        RETURNS
-            the formatted string
+        :param tokens: the input list of token to format
+        :type tokens: tuple[Token, str]
+        :rtype: str
         """
 
         cls.__initialize()
@@ -127,14 +114,11 @@ class Formatter(object):
 
     @classmethod
     def raw_format(cls, tokens):
-        """
-        Format the given list of tokens as a simple string (no color).
+        """Format the given list of tokens as a simple string (no color)
 
-        PARAMETERS
-            tokens: the input list of token to format
-
-        RETURNS
-            the formatted string
+        :param tokens: the input list of token to format
+        :type tokens: tuple[Token, str]
+        :rtype: str
         """
 
         formatter = get_formatter_by_name(Formatter.NO_COLOR,
@@ -143,14 +127,11 @@ class Formatter(object):
 
     @classmethod
     def tokenize_diff(cls, diff):
-        """
-        Token generator for a patch string
+        """Token generator for a patch string
 
-        PARAMETERS
-            diff: the patch to format
-
-        RETURNS
-            a stream of tokens: tuple of (Token, string)
+        :param diff: the patch to format
+        :type diff: str
+        :rtype: tuple[Token, str]
         """
 
         heading = diff.splitlines()[0]

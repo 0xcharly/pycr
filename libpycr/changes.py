@@ -1,6 +1,4 @@
-"""
-This module provides routine to manipulate Gerrit Code Review Change-Ids.
-"""
+"""This module provides routine to manipulate Gerrit Code Review Change-Ids"""
 
 import re
 
@@ -21,14 +19,11 @@ LEGACY_CHANGE_ID_RANGE = re.compile('^(\\d+)\\.\\.(\\d+)$')
 
 
 def expand_change_range(change):
-    """
-    Expand a change range.
+    """Expand a change range and returns a list of legacy numeric IDs
 
-    PARAMETERS
-        change_range: the range of change (POSITIVE..POSITIVE)
-
-    RETURNS
-        a list of legacy numeric IDs
+    :param change_range: the range of change (POSITIVE..POSITIVE)
+    :type change_range: str
+    :rtype: list[int]
     """
 
     match = LEGACY_CHANGE_ID_RANGE.match(change)
@@ -39,19 +34,17 @@ def expand_change_range(change):
 
 
 def fetch_change_list(change_list):
-    """
-    Convert a list of changes or change ranges into a list of ChangeInfo.
+    """Convert a list of changes or change ranges into a list of ChangeInfo
+
     The input list accepts the following string elements:
 
         - a change number: POSITIVE
         - a range of change numbers: POSITIVE..POSITIVE
         - a change-id: I[0-9a-f]{8,40}
 
-    PARAMETERS
-        change_list: list of string
-
-    RETURNS
-        a tuple with a list of ChangeInfo, and a list of unknown changes
+    :param change_list: the list of changes
+    :type change_list: list[str]
+    :rtype: list[ChangeInfo]
     """
 
     change_ids = []
@@ -77,25 +70,20 @@ def fetch_change_list(change_list):
 
 
 def fetch_change_list_or_fail(change_list):
-    """
-    Same as fetch_change_list, but fail if the final change list is empty.
+    """Same as fetch_change_list, but fail if the final change list is empty
 
-    PARAMETERS
-        change_list: list of string
-
-    RETURNS
-        a tuple with a list of ChangeInfo, and a list of unknown changes
+    :param change_list: the list of changes
+    :type change_list: list[str]
+    :rtype: list[ChangeInfo]
     """
 
     changes = fetch_change_list(change_list)
 
-    # If no correct change found
+    # If no correct changes found
     if not changes:
         message = 'no valid change-id provided'
-
         if not RequestFactory.require_auth():
             message += ' (missing authentication?)'
-
         fail(message)
 
     return changes

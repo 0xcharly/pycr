@@ -1,23 +1,19 @@
-"""
-This module contains the low level, operating system routines used for file
-input / output.
-"""
+"""Low level, operating system routines used for file input / output"""
 
 import os
 import sys
 
 
 def format_message(message, prefix=None, why=None):
-    """
-    Format a message, along with the prefix and exception message if provided.
+    """Format a message, along with the prefix and exception if provided
 
-    PARAMETERS
-        message: the message to print
-        prefix: optional prefix to the message
-        why: optional exception to display. Defaults to None
-
-    RETURNS
-        the formatted message as a string
+    :param message: the message to print
+    :type message: str
+    :param prefix: optional prefix to the message
+    :type prefix: str
+    :param why: optional exception to display. Defaults to None
+    :type why: str
+    :rtype: str
     """
 
     buf = []
@@ -34,51 +30,51 @@ def format_message(message, prefix=None, why=None):
 
 
 def info(message):
-    """
-    Print an informative message. Use the standard output stream.
+    """Print an informative message in the standard output stream
 
-    PARAMETERS
-        message: the message to print
+    :param message: the message to print
+    :type message: str
     """
 
     print format_message(message)
 
 
 def warn(message, why=None):
-    """
-    Print a warning message, along with the exception message if provided.
+    """Print a warning message, along with the exception if provided
+
     Use the error output stream.
 
-    PARAMETERS
-        message: the message to print
-        why: optional exception to display. Defaults to None
+    :param message: the message to print
+    :type message: str
+    :param why: optional exception to display. Defaults to None
+    :type why: str
     """
 
     print >> sys.stderr, format_message(message, prefix='warning', why=why)
 
 
 def fail(message, why=None):
-    """
-    Print an error message, along with the exception message if provided.
+    """Print an error message, along with the exception message if provided
+
     Use the error output stream. Exit the program with error code 1.
 
-    PARAMETERS
-        message: the message to print
-        why: optional exception to display. Defaults to None
+    :param message: the message to print
+    :type message: str
+    :param why: optional exception to display. Defaults to None
+    :type why: str
     """
 
     sys.exit(format_message(message, prefix='error', why=why))
 
 
 def confirm(question):
-    """
-    Request user input to the given question. Expect a yes/no answer.
+    """Request user input to the given question: expect a yes/no answer
 
-    PARAMETERS
-        question: question to ask the user
+    True if the answer is YES, False otherwise.
 
-    RETURNS
-        True if the answer is YES, False otherwise
+    :param question: question to ask the user
+    :type question: str
+    :rtype: bool
     """
 
     print question
@@ -88,16 +84,15 @@ def confirm(question):
 
 
 def ask(question, choices=None):
-    """
-    Request user input to the given question. If CHOICES is not None, display
-    the list of choices and expect an index.
+    """Request user input to the given question
 
-    PARAMETERS
-        question: question to ask the user
-        choices: if not None, the allowable values for the answer
+    If CHOICES is not None, display the list of choices and expect an index.
 
-    RETURNS
-        True if the answer is YES, False otherwise
+    :param question: question to ask the user
+    :type question: str
+    :param choices: if not None, the allowable values for the answer
+    :type choices: collections.iterable[str]
+    :rtype: str
     """
 
     if choices is None:
@@ -116,17 +111,18 @@ def ask(question, choices=None):
 
 
 def reverse_find_file(filename, origin=os.getcwd(), ignores=None):
-    """
-    Look for a given filename in the current directory. Try the parent
-    directories until found of file-system root reached.
+    """Look for a given filename in the current directory
 
-    PARAMETERS
-        filename: the file name as a string
-        origin: the origin directory for the search
-        ignores: an optional list of files to ignore
+    Try the parent directories until found of file-system root reached.
+    Returns the path to the file as a string, or None if not found.
 
-    RETURNS
-        the path to the file as a string, or None if not found
+    :param filename: the file name as a string
+    :type filename: str
+    :param origin: the origin directory for the search
+    :type origin: str
+    :param ignores: an optional list of files to ignore
+    :type ignores: collections.iterable[str]
+    :rtype: str | None
     """
 
     directory = origin

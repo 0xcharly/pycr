@@ -1,7 +1,4 @@
-"""
-This module contains the low level routines used by this tool for command line
-processing.
-"""
+"""Low level routines used by this tool for command line processing"""
 
 import argparse
 import logging
@@ -19,11 +16,9 @@ from libpycr.builtin import *  # NOQA
 
 
 def build_cmdline_parser():
-    """
-    Build and return the command-line parser to use.
+    """Build and return the command-line parser to use
 
-    RETURNS
-        argparse.ArgumentParser
+    :rtype: argparse.ArgumentParser
     """
 
     # Create the parser object
@@ -78,13 +73,13 @@ def build_cmdline_parser():
 
 
 def display_help(cmd_name=None):
-    """
-    Display the help message, including the program usage and information about
-    the arguments.
+    """Display the help message
 
-    PARAMETERS
-        cmd_name: optional command name for which to display the help message.
-            displays the program-wide help if None.
+    This includes the program usage and information about the arguments.
+
+    :param cmd_name: optional command name for which to display the help
+        message. Displays the program-wide help if None.
+    :type cmd_name: str
     """
 
     parser = build_cmdline_parser()
@@ -105,16 +100,14 @@ def display_help(cmd_name=None):
 
 
 def parse_command_line(argv):
-    """
-    Parse the command-line arguments, and return a tuple containing the action
-    to execute, and the arguments to use with that action.
+    """Parse the command-line arguments
 
-    PARAMETERS
-        argv: the argument array to parse
+    Returns a tuple containing the action to execute, and the arguments to use
+    with that action.
 
-    RETURNS
-        a tuple containing both the command callback to execute and any
-        remaining arguments that need more parsing.
+    :param argv: the argument array to parse
+    :type argv: list[str]
+    :rtype: Function, list[str]
     """
 
     parser = build_cmdline_parser()

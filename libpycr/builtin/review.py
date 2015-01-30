@@ -1,6 +1,4 @@
-"""
-Review a change.
-"""
+"""Review a change"""
 
 import argparse
 import logging
@@ -15,25 +13,23 @@ from libpycr.utils.system import ask, fail
 
 
 class Review(Builtin):
-    """Implement the REVIEW command."""
+    """Implement the REVIEW command"""
 
     log = logging.getLogger(__name__)
 
     @property
     def description(self):
-        """Inherited."""
         return 'code-review a change'
 
     @staticmethod
     def parse_command_line(arguments):
-        """
-        Parse the SUBMIT command command-line arguments.
+        """Parse the SUBMIT command command-line arguments
 
-        PARAMETERS
-            arguments: a list of command-line arguments to parse
+        Returns a tuple with a change_id and a revision_id.
 
-        RETURNS
-            a tuple with a change_id and a revision_id
+        :param arguments: a list of command-line arguments to parse
+        :type arguments: list[str]
+        :rtype: str, str
         """
 
         parser = argparse.ArgumentParser(description='Code-review a change')
@@ -51,15 +47,15 @@ class Review(Builtin):
 
     @staticmethod
     def tokenize(change, review):
-        """
-        Token generator for the output.
+        """Token generator for the output
 
-        PARAMETERS
-            change: the ChangeInfo corresponding to the change
-            review: the ReviewInfo corresponding to the review
+        Yields a stream of tokens: tuple of (Token, string).
 
-        RETURNS
-            a stream of tokens: tuple of (Token, string)
+        :param change: the change
+        :type change: ChangeInfo
+        :param review: the review
+        :type review: ReviewInfo
+        :yield: tuple[Token, str]
         """
 
         for token in change.tokenize():
@@ -72,8 +68,6 @@ class Review(Builtin):
             yield token
 
     def run(self, arguments, *args, **kwargs):
-        """Inherited."""
-
         change_id, score, message = Review.parse_command_line(arguments)
 
         try:

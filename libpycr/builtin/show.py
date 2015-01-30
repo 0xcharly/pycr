@@ -1,6 +1,4 @@
-"""
-Display the code review scores for one or more Gerrit CL.
-"""
+"""Display the code review scores for one or more Gerrit CL"""
 
 import argparse
 
@@ -15,23 +13,19 @@ from libpycr.utils.system import warn
 
 
 class Show(Builtin):
-    """Implement the SHOW command."""
+    """Implement the SHOW command"""
 
     @property
     def description(self):
-        """Inherited."""
         return 'display the change(s) details'
 
     @staticmethod
     def parse_command_line(arguments):
-        """
-        Parse the SHOW command command-line arguments.
+        """Parse the SHOW command command-line arguments
 
-        PARAMETERS
-            arguments: a list of command-line arguments to parse
-
-        RETURNS
-            a list of ChangeInfo
+        :param arguments: a list of command-line arguments to parse
+        :type arguments: list[str]
+        :rtype: list[ChangeInfo]
         """
 
         parser = argparse.ArgumentParser(
@@ -45,17 +39,19 @@ class Show(Builtin):
 
     @staticmethod
     def tokenize(idx, change, reviews, patch):
-        """
-        Token generator for the output.
+        """Token generator for the output.
 
-        PARAMETERS
-            idx: index of the change in the list of changes to fetch
-            change: the ChangeInfo corresponding to the change
-            reviews: the reviews attached to the change
-            patch: the patch to display along the change
+        Yields a stream of tokens: tuple of (Token, string).
 
-        RETURNS
-            a stream of tokens: tuple of (Token, string)
+        :param idx: index of the change in the list of changes to fetch
+        :type idx: int
+        :param change: the change
+        :type change: ChangeInfo
+        :param reviews: the reviews attached to the change
+        :type reviews: list[ReviewInfo]
+        :param patch: the patch to display along the change
+        :type patch: str
+        :yield: tuple[Token, str]
         """
 
         if idx:
@@ -79,8 +75,6 @@ class Show(Builtin):
             yield token
 
     def run(self, arguments, *args, **kwargs):
-        """Inherited."""
-
         changes = Show.parse_command_line(arguments)
         assert changes, 'unexpected empty list'
 

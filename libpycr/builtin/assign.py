@@ -1,6 +1,4 @@
-"""
-Assign one or more reviewers to one or more Gerrit CL.
-"""
+"""Assign one or more reviewers to one or more Gerrit CL"""
 
 import os
 import sys
@@ -14,17 +12,15 @@ from libpycr.utils.system import fail, warn
 
 
 class Assign(Builtin):
-    """Implement the ASSIGN command."""
+    """Implement the ASSIGN command"""
 
     @property
     def description(self):
-        """Inherited."""
         return 'add/delete reviewer to/from change(s)'
 
     @staticmethod
     def display_help():
-        """
-        Display the help for this command and exit.
+        """Display the help for this command and exit
 
         We have to forge our own help output because we do not use the argparse
         module to parse the command-line arguments.
@@ -49,17 +45,16 @@ class Assign(Builtin):
 
     @staticmethod
     def parse_command_line(arguments):
-        """
-        Parse the SHOW command command-line arguments.
+        """Parse the SHOW command command-line arguments
 
-        PARAMETERS
-            arguments: a list of command-line arguments to parse
-
-        RETURNS
-            a tuple containing three lists:
+        Returns a tuple containing three lists:
                 - the list of ChangeInfo
                 - the list of reviewers to add
                 - the list of reviewers to delete
+
+        :param arguments: a list of command-line arguments to parse
+        :type arguments: list[str]
+        :rtype: tuple[ChangeInfo, list[str], list[str]]
         """
 
         changes, to_add, to_del = [], [], []
@@ -83,17 +78,19 @@ class Assign(Builtin):
 
     @staticmethod
     def tokenize(idx, change, added, deleted):
-        """
-        Token generator for the output.
+        """Token generator for the output
 
-        PARAMETERS
-            idx: index of the change in the list of changes to fetch
-            change: the ChangeInfo corresponding to the change
-            added: the list of reviewers added
-            deleted: the list of reviewers deleted
+        Yields a stream of tokens: tuple of (Token, string).
 
-        RETURNS
-            a stream of tokens: tuple of (Token, string)
+        :param idx: index of the change in the list of changes to fetch
+        :type idx: int
+        :param change: the ChangeInfo corresponding to the change
+        :type change: ChangeInfo
+        :param added: the list of reviewers added
+        :type added: list[ReviewerInfo]
+        :param deleted: the list of reviewers deleted
+        :type deleted: list[ReviewerInfo]
+        :yield: tuple[Token, str]
         """
 
         if idx:
@@ -133,8 +130,6 @@ class Assign(Builtin):
                 yield token
 
     def run(self, arguments, *args, **kwargs):
-        """Inherited."""
-
         changes, to_add, to_del = Assign.parse_command_line(arguments)
         assert changes, 'unexpected empty list'
 
@@ -151,8 +146,8 @@ class Assign(Builtin):
                         added.extend(reviewers)
 
                 except PyCRError as why:
-                    warn('%s: cannot assign reviewer %s' %
-                        (change.change_id[:9], account_id), why)
+                    warn('{}: cannot assign reviewer {}'.format(
+                        change.change_id[:9], account_id), why)
 
             # Delete reviewers
             for account_id in to_del:
@@ -163,8 +158,8 @@ class Assign(Builtin):
                         deleted.append(review.reviewer)
 
                 except PyCRError as why:
-                    warn('%s: cannot delete reviewer %s' %
-                        (change.change_id[:9], account_id), why)
+                    warn('{}: cannot delete reviewer {}'.format(
+                        change.change_id[:9], account_id), why)
 
             print Formatter.format(
                 Assign.tokenize(idx, change, added, deleted))

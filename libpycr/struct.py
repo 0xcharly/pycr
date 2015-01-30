@@ -1,7 +1,4 @@
-"""
-This module contains all the Gerrit structure that can be received from the
-server.
-"""
+"""Provides all the Gerrit structure that can be received from the server"""
 
 from abc import ABCMeta, abstractmethod
 
@@ -12,7 +9,7 @@ from libpycr.utils.output import Formatter, Token, NEW_LINE
 # Disable "Too many instance attributes" (for all above classes)
 # Disable "Too few public methods" (for all above classes)
 class Info(object):
-    """Info interface."""
+    """Info interface"""
 
     __metaclass__ = ABCMeta
 
@@ -20,29 +17,25 @@ class Info(object):
         return Formatter.format(self.tokenize())
 
     def raw_str(self):
-        """
-        Return a simple string (no formatting).
+        """Return a simple string (no formatting)
 
-        RETURNS
-            the non-decorated version of __str__
+        :rtype: str
         """
-
         return Formatter.raw_format(self.tokenize())
 
     @abstractmethod
     def tokenize(self):
-        """
-        Generate a stream of token.
+        """Generate a stream of token
+
         This method should be implemented as a Python generator.
 
-        RETURNS
-            a stream of tokens: tuple of (Token, string)
+        :rtype: tuple(Token, string)
         """
         pass
 
 
 class AccountInfo(Info):
-    """An account object."""
+    """An account object"""
 
     def __init__(self):
         self.name = None
@@ -50,8 +43,6 @@ class AccountInfo(Info):
         self.username = None
 
     def tokenize(self):
-        """Overrides."""
-
         # If email is available:
         #   John Doe <john@doe.com>
         # else:
@@ -67,15 +58,12 @@ class AccountInfo(Info):
 
     @staticmethod
     def parse(data):
-        """
-        Initialize a AccountInfo object and return it.
+        """Initialize a AccountInfo object and return it
 
-        PARAMETERS
-            data: the JSON representation of the account as emitted by the
-                Gerrit Code Review server (AccountInfo)
-
-        RETURNS
-            a AccountInfo object
+        :param data: the JSON representation of the account as emitted by the
+            Gerrit Code Review server (AccountInfo)
+        :type data: str
+        :rtype: AccountInfo
         """
 
         account = AccountInfo()
@@ -97,8 +85,6 @@ class GitPersonInfo(Info):
         self.timezone = None
 
     def tokenize(self):
-        """Override."""
-
         # John Doe <john@doe.com>
         yield Token.Text, self.name
         yield Token.Whitespace, ' '
@@ -108,15 +94,12 @@ class GitPersonInfo(Info):
 
     @staticmethod
     def parse(data):
-        """
-        Initialize a GitPersonInfo object and return it.
+        """Initialize a GitPersonInfo object and return it
 
-        PARAMETERS
-            data: the JSON representation of the change as emitted by the
-                Gerrit Code Review server (GitPersonInfo)
-
-        RETURNS
-            a GitPersonInfo object
+        :param data: the JSON representation of the change as emitted by the
+            Gerrit Code Review server (GitPersonInfo)
+        :type data: str
+        :rtype: GitPersonInfo
         """
 
         person = GitPersonInfo()
@@ -130,7 +113,7 @@ class GitPersonInfo(Info):
 
 
 class CommitInfo(Info):
-    """A commit object."""
+    """A commit object"""
 
     def __init__(self):
         self.commit_id = None
@@ -141,8 +124,6 @@ class CommitInfo(Info):
         self.message = None
 
     def tokenize(self):
-        """Override."""
-
         # Commit-Id
         # commit a61970cc872b6f31953869450fc9c560257126e8
         yield Token.Generic.Heading, 'commit %s' % self.commit_id
@@ -166,15 +147,12 @@ class CommitInfo(Info):
 
     @staticmethod
     def parse(data):
-        """
-        Initialize a CommitInfo object and return it.
+        """Initialize a CommitInfo object and return it
 
-        PARAMETERS
-            data: the JSON representation of the change as emitted by the
-                Gerrit Code Review server (CommitInfo)
-
-        RETURNS
-            a CommitInfo object
+        :param data: the JSON representation of the change as emitted by the
+            Gerrit Code Review server (CommitInfo)
+        :type data: str
+        :rtype: CommitInfo
         """
 
         commit = CommitInfo()
@@ -198,7 +176,7 @@ class CommitInfo(Info):
 
 
 class RevisionInfo(Info):
-    """A revision object."""
+    """A revision object"""
 
     def __init__(self):
         self.draft = None
@@ -210,23 +188,18 @@ class RevisionInfo(Info):
         self.actions = None
 
     def tokenize(self):
-        """Override."""
-
         if self.commit:
             for token in self.commit.tokenize():
                 yield token
 
     @staticmethod
     def parse(data):
-        """
-        Initialize a CommitInfo object and return it.
+        """Initialize a CommitInfo object and return it
 
-        PARAMETERS
-            data: the JSON representation of the change as emitted by the
-                Gerrit Code Review server (CommitInfo)
-
-        RETURNS
-            a CommitInfo object
+        :param data: the JSON representation of the change as emitted by the
+            Gerrit Code Review server (CommitInfo)
+        :type data: str
+        :rtype: CommitInfo
         """
 
         revision = RevisionInfo()
@@ -246,7 +219,7 @@ class RevisionInfo(Info):
 
 
 class ChangeInfo(Info):
-    """A change object."""
+    """A change object"""
 
     MERGED = 'MERGED'
     SUBMITTED = 'SUBMITTED'
@@ -264,8 +237,6 @@ class ChangeInfo(Info):
         self.current_revision = None
 
     def tokenize(self):
-        """Override."""
-
         yield Token.Generic.Heading, 'change-id %s' % self.change_id
         yield NEW_LINE
 
@@ -278,15 +249,12 @@ class ChangeInfo(Info):
 
     @staticmethod
     def parse(data):
-        """
-        Initialize a ChangeInfo object and return it.
+        """Initialize a ChangeInfo object and return it
 
-        PARAMETERS
-            data: the JSON representation of the change as emitted by the
-                Gerrit Code Review server (ChangeInfo)
-
-        RETURNS
-            a ChangeInfo object
+        :param data: the JSON representation of the change as emitted by the
+            Gerrit Code Review server (ChangeInfo)
+        :type data: str
+        :rtype: ChangeInfo
         """
 
         change = ChangeInfo()
@@ -319,15 +287,13 @@ class ChangeInfo(Info):
 
 
 class ReviewerInfo(Info):
-    """A reviewer object."""
+    """A reviewer object"""
 
     def __init__(self):
         self.reviewer = None
         self.approvals = None
 
     def tokenize(self):
-        """Override."""
-
         # Reviewer information
         #     Reviewer: John Doe <john@doe.com>
         yield Token.Text, '    Reviewer: '
@@ -351,15 +317,12 @@ class ReviewerInfo(Info):
 
     @staticmethod
     def parse(data):
-        """
-        Initialize the ReviewerInfo object and return it.
+        """Initialize the ReviewerInfo object and return it
 
-        PARAMETERS
-            data: the JSON representation of the reviewer as emitted by the
-                Gerrit Code Review server (ReviewerInfo)
-
-        RETURNS
-            a ReviewerInfo
+        :param data: the JSON representation of the reviewer as emitted by the
+            Gerrit Code Review server (ReviewerInfo)
+        :type data: str
+        :rtype: ReviewerInfo
         """
 
         reviewer = ReviewerInfo()
@@ -371,14 +334,12 @@ class ReviewerInfo(Info):
 
 
 class ReviewInfo(Info):
-    """A review object."""
+    """A review object"""
 
     def __init__(self):
         self.labels = None
 
     def tokenize(self):
-        """Override."""
-
         # In a ReviewInfo record, scores are numbers: we need to convert them
         # to string
         for label, score in self.labels:
@@ -396,15 +357,12 @@ class ReviewInfo(Info):
 
     @staticmethod
     def parse(data):
-        """
-        Initialize the ReviewInfo object and return it.
+        """Initialize the ReviewInfo object and return it
 
-        PARAMETERS
-            data: the JSON representation of the review as emitted by the
-                Gerrit Code Review server (ReviewInfo)
-
-        RETURNS
-            a ReviewInfo
+        :param data: the JSON representation of the review as emitted by the
+            Gerrit Code Review server (ReviewInfo)
+        :type data: str
+        :rtype: ReviewInfo
         """
 
         review = ReviewInfo()

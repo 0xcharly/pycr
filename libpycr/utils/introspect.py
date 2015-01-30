@@ -1,19 +1,16 @@
-"""
-This module provides introspection helpers.
-"""
+"""This module provides introspection helpers"""
 
 
 def get_all_subclasses(klass):
-    """
+    """Return all subclasses of a class
+
     Use Python introspection to list all subclasses of the given class.
     This function do not stop to the direct children, but walk the whole
     inheritance tree.
 
-    PARAMETERS
-        klass: the root class to use for introspection
-
-    RETURNS
-        a set of subclasses
+    :param klass: the root class to use for introspection
+    :type klass: T
+    :rtype: tuple(T)
     """
 
     subclasses = set()
@@ -26,4 +23,4 @@ def get_all_subclasses(klass):
                 subclasses.add(child)
                 queue.append(child)
 
-    return subclasses
+    return tuple(subclasses)

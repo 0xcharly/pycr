@@ -1,6 +1,4 @@
-"""
-This module encapsulate the logic for querying an HTTP server.
-"""
+"""This module encapsulate the logic for querying an HTTP server"""
 
 import base64
 import getpass
@@ -32,7 +30,7 @@ GERRIT_MAGIC = ")]}'\n"
 
 
 class RequestFactory(object):
-    """A Request factory."""
+    """A Request factory"""
 
     # Logger
     log = logging.getLogger(__name__)
@@ -42,12 +40,12 @@ class RequestFactory(object):
 
     @classmethod
     def set_auth_token(cls, username, password=None):
-        """
-        Set the authentication pair to use for HTTP requests.
+        """Set the authentication pair to use for HTTP requests
 
-        PARAMETERS
-            username: the account username
-            password: the account HTTP password
+        :param username: the account username
+        :type username: str
+        :param password: the account HTTP password
+        :type password: str
         """
 
         Config.set('gerrit.username', username)
@@ -55,46 +53,44 @@ class RequestFactory(object):
 
     @classmethod
     def set_host(cls, host):
-        """Set the Gerrit Code Review server host name.
+        """Set the Gerrit Code Review server host name
 
-        PARAMETERS
-            host: the server's host
+        :param host: the server's host
+        :type host: str
         """
 
         Config.set('gerrit.host', host)
 
     @classmethod
     def set_unsecure_connection(cls, unsecure):
-        """If True, requests will be made over HTTP instead of HTTPS.
+        """If True, requests will be made over HTTP instead of HTTPS
 
         Always use HTTPS by default.
 
-        PARAMETERS
-            unsecure: True to use HTTP
+        :param unsecure: True to use HTTP
+        :type unsecure: bool
         """
 
         Config.set('gerrit.unsecure', unsecure)
 
     @classmethod
     def require_auth(cls):
-        """
-        Return True if authentication is required.
-        Check whether cls.username is None.
+        """Whether authentication is required
 
-        RETURNS
-            True if auth required, False otherwise
+        Return True if authentication is required.
+
+        :rtype: bool
         """
 
         return Config.get('gerrit.username') is not None
 
     @classmethod
     def get_http_digest_auth_token(cls):
-        """
-        Return the HTTPDigestAuth object to use for authentication.
+        """Return the HTTPDigestAuth object to use for authentication
+
         Prompt the user if the password is unknown.
 
-        RETURNS
-            requests.auth.HTTPDigestAuth
+        :rtype: requests.auth.HTTPDigestAuth
         """
 
         username = Config.get('gerrit.username')
@@ -107,11 +103,9 @@ class RequestFactory(object):
 
     @classmethod
     def get_remote_base_url(cls):
-        """
-        Return the Gerrit Code Review server base URL.
+        """Return the Gerrit Code Review server base URL
 
-        RETURNS
-            the Gerrit Code Review server base URL as a string
+        :rtype: str
         """
 
         url = Config.get('gerrit.host')
@@ -130,20 +124,18 @@ class RequestFactory(object):
         # /projects/ request URL /a/projects/.
 
         if RequestFactory.require_auth():
-            url = '%s/a' % url
+            url = '{}/a'.format(url)
 
         if not url.startswith('http://') or not url.startswith('https://'):
-            return '%s://%s' % ('http' if unsecure else 'https', url)
+            return '{}://{}'.format('http' if unsecure else 'https', url)
 
         return url
 
     @classmethod
     def get_session(cls, **kwargs):
-        """
-        Return a requests.Session object.
+        """Return a requests.Session object
 
-        RETURNS
-            requests.Session
+        :rtype: requests.Session
         """
 
         if cls._session is None:
@@ -159,26 +151,26 @@ class RequestFactory(object):
 
     @classmethod
     def send(cls, endpoint, method=GET, encoding=JSON, **kwargs):
+        """Return the result of a HTTP request
+
+        Returns a tuple of two elements: the raw response (stripped from magic
+        for the JSON format) and the decoded object of that response, or None
+        if encoding is PLAIN. If response is no content (status code
+        204), returns a tuple of None values.
+
+        :param endpoint: the endpoint to the request
+        :type endpoint: str
+        :param method: HTTP protocol method to use (either GET or POST)
+        :type method: str
+        :param encoding: expected response format (JSON, base64 or plain text)
+        :type encoding: str
+        :param **kwargs: any additional arguments to the underlying API call
+        :type **kwargs: dict
+        :rtype: str, dict | None
+        :raise: requests.exceptions.RequestException on error
         """
-        Return the result of a HTTP request.
 
-        PARAMETERS
-            endpoint: the endpoint to the request
-            method: HTTP protocol method to use (either GET or POST)
-            encoding: expected response format (JSON, base64 or plain text)
-            **kwargs: any additional arguments to the underlying API call
-
-        RETURNS
-            a tuple of two elements: the raw response (stripped from magic for
-                the JSON format) and the decoded object of that response, or
-                None if expected_encoding is PLAIN. If response is no content
-                (status code 204), returns a tuple of None values
-
-        RAISES
-            requests.exceptions.RequestException on error
-        """
-
-        cls.log.debug('Query URL: %s' % endpoint)
+        cls.log.debug('Query URL: %s', endpoint)
 
         try:
             response = cls.get_session().request(method, endpoint, **kwargs)
@@ -233,53 +225,46 @@ class RequestFactory(object):
 
     @classmethod
     def get(cls, endpoint, **kwargs):
-        """
-        Return the result of a HTTP GET request.
+        """Return the result of a HTTP GET request
 
-        PARAMETERS
-            endpoint: the endpoint to GET
-            **kwargs: any additional arguments to the underlying GET call
+        Returns a tuple of two elements: the raw response (stripped from magic)
+        and the json object of that response.
 
-        RETURNS
-            a tuple of two elements: the raw response (stripped from magic) and
-                the json object of that response
-
-        RAISES
-            requests.exceptions.RequestException on error
+        :param endpoint: the endpoint to GET
+        :type endpoint: str
+        :param **kwargs: any additional arguments to the underlying GET call
+        :type **kwargs: dict
+        :rtype: str, dict
+        :raise: requests.exceptions.RequestException on error
         """
 
         return cls.send(endpoint, method=GET, **kwargs)
 
     @classmethod
     def post(cls, endpoint, **kwargs):
-        """
-        Return the result of a HTTP POST request.
+        """Return the result of a HTTP POST request
 
-        PARAMETERS
-            endpoint: the endpoint to POST
-            **kwargs: any additional arguments to the underlying POST call
+        Returns a tuple of two elements: the raw response (stripped from magic)
+        and the json object of that response.
 
-        RETURNS
-            a tuple of two elements: the raw response (stripped from magic) and
-                the json object of that response
-
-        RAISES
-            requests.exceptions.RequestException on error
+        :param endpoint: the endpoint to POST
+        :type endpoint: str
+        :param **kwargs: any additional arguments to the underlying POST call
+        :type **kwargs: dict
+        :raise: requests.exceptions.RequestException on error
         """
 
         return cls.send(endpoint, method=POST, **kwargs)
 
     @classmethod
     def delete(cls, endpoint, **kwargs):
-        """
-        Return the result of a HTTP DELETE request.
+        """Return the result of a HTTP DELETE request
 
-        PARAMETERS
-            endpoint: the endpoint to DELETE
-            **kwargs: any additional arguments to the underlying DELETE call
-
-        RAISES
-            requests.exceptions.RequestException on error
+        :param endpoint: the endpoint to DELETE
+        :type endpoint: str
+        :param **kwargs: any additional arguments to the underlying DELETE call
+        :type **kwargs: dict
+        :raise: requests.exceptions.RequestException on error
         """
 
         cls.send(endpoint, method=DELETE, **kwargs)

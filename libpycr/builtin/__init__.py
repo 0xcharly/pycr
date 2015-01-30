@@ -1,8 +1,8 @@
-"""Contains the CL tool builtins."""
+"""Contains the CL tool builtins"""
 
 
 def __find_all_modules():
-    """Find all sub-modules.
+    """Find all sub-modules
 
     Read the current directory and generate the list of all modules present
     it. Use this function as a generator.
@@ -16,4 +16,4 @@ def __find_all_modules():
         if ext != '.pyc' and not base.startswith('.') and base != this:
             yield base
 
-__all__ = list(__find_all_modules())
+__all__ = tuple(__find_all_modules())

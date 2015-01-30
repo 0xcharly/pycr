@@ -1,7 +1,4 @@
-"""
-This modules contains the low level routine to interact with an instance of a
-Git repository.
-"""
+"""Low level routines to interact with an instance of a Git repository"""
 
 import datetime
 import os
@@ -9,14 +6,13 @@ import subprocess
 
 
 def get_changeset():
-    """Return a numeric identifier of the latest git changeset.
+    """Return a numeric identifier of the latest git changeset
 
     The result is the UTC timestamp of the changeset in YYYYMMDDHHMMSS format.
     This value isn't guaranteed to be unique, but collisions are very unlikely,
     so it's sufficient for generating the development version numbers.
 
-    RETURNS
-        a numeric identifier of the latest git changeset as a string
+    :rtype: str
     """
 
     repo_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))

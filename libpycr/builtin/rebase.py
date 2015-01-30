@@ -1,6 +1,4 @@
-"""
-Rebase a change.
-"""
+"""Rebase a change"""
 
 import argparse
 import logging
@@ -13,26 +11,24 @@ from libpycr.utils.system import fail
 
 
 class Rebase(Builtin):
-    """Implement the REBASE command."""
+    """Implement the REBASE command"""
 
     # Logger for this command
     log = logging.getLogger(__name__)
 
     @property
     def description(self):
-        """Inherited."""
         return 'rebase a change'
 
     @staticmethod
     def parse_command_line(arguments):
-        """
-        Parse the REBASE command command-line arguments.
+        """Parse the REBASE command command-line arguments
 
-        PARAMETERS
-            arguments: a list of command-line arguments to parse
+        Returns a tuple with a change_id and a revision_id.
 
-        RETURNS
-            a tuple with a change_id and a revision_id
+        :param arguments: a list of command-line arguments to parse
+        :type arguments: list[str]
+        :rtype: str, str
         """
 
         parser = argparse.ArgumentParser(description='Rebase a change.')
@@ -46,14 +42,13 @@ class Rebase(Builtin):
 
     @staticmethod
     def tokenize(change):
-        """
-        Token generator for the output.
+        """Token generator for the output
 
-        PARAMETERS
-            change: the ChangeInfo corresponding to the change
+        Yields a stream of tokens: tuple of (Token, string).
 
-        RETURNS
-            a stream of tokens: tuple of (Token, string)
+        :param change: the change
+        :type change: ChangeInfo
+        :yield: tuple[Token, str]
         """
 
         for token in change.tokenize():
@@ -67,8 +62,6 @@ class Rebase(Builtin):
         yield Token.Text, ')'
 
     def run(self, arguments, *args, **kwargs):
-        """Inherited."""
-
         change_id = Rebase.parse_command_line(arguments)
 
         try:

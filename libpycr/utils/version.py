@@ -1,10 +1,10 @@
-"""Compute the version number based on libpycr.VERSION."""
+"""Compute the version number based on libpycr.VERSION"""
 
 from libpycr.utils.git import get_changeset
 
 
 def get_version(version=None):
-    """Return a PEP 386-compliant version number from VERSION."""
+    """Return a PEP 386-compliant version number from VERSION"""
 
     if version is None:
         from libpycr import VERSION as version
@@ -29,8 +29,5 @@ def get_version(version=None):
     elif version[3] != 'final':
         mapping = {'alpha': 'a', 'beta': 'b', 'rc': 'c'}
         sub = mapping[version[3]] + str(version[4])
-
-    else:
-        sub = ''
 
     return str(main + sub)

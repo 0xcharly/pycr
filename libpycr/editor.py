@@ -1,6 +1,4 @@
-"""
-This module provides convenient use of EDITOR.
-"""
+"""This module provides convenient use of EDITOR"""
 
 import os
 import subprocess
@@ -10,26 +8,22 @@ from libpycr.config import Config
 
 
 def get_editor():
-    """
-    Return the user's editor, or vi if not defined.
+    """Return the user's editor, or vi if not defined
 
-    RETURNS
-        the prefered editor
+    :rtype: str
     """
 
     return os.environ.get('EDITOR') or os.environ.get('VISUAL') or 'vi'
 
 
 def strip_comments(data, line_comment='#'):
-    """
-    Strip comments from the input string.
+    """Strip comments from the input string and return the result
 
-    PARAMETERS
-        data: input string
-        line_comment: the line comment delimiter
-
-    RETURNS
-        the input string striped from comments
+    :param data: multiline text to strip comments from
+    :type data: str
+    :param line_comment: the line comment delimiter
+    :type line_comment: str
+    :rtype: str
     """
 
     return '\n'.join([l for l in data.splitlines()
@@ -37,16 +31,15 @@ def strip_comments(data, line_comment='#'):
 
 
 def raw_input_editor(default=None):
-    """
-    Like the built-in raw_input(), except that it uses a visual
-    text editor for ease of editing.
+    """Request user input by firing an editor
 
-    PARAMETERS
-        editor: the editor to use
-        default: the initital content of the editor
+    Like the built-in raw_input(), except that it uses a visual text editor for
+    ease of editing.
 
-    RETURNS
-        the final content after edition
+    :param editor: the editor to use
+    :type editor: str
+    :param default: the initital content of the editor
+    :type default: str | None
     """
 
     editor = Config.get('core.editor', get_editor())

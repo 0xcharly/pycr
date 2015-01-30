@@ -1,6 +1,4 @@
-"""
-This module provides convenient use of PAGER.
-"""
+"""Provides convenient use of PAGER"""
 
 import os
 import sys
@@ -10,11 +8,9 @@ from libpycr.config import Config
 
 
 def get_pager():
-    """
-    Return the user's pager, or less if not defined.
+    """Return the user's pager, or less if not defined
 
-    RETUNRS
-        the prefered pager
+    :rtype: str
     """
 
     return os.environ.get('PAGER') or 'less'
@@ -23,8 +19,9 @@ def get_pager():
 # pylint: disable=R0903
 # Disable "Too few public methods" (for all above classes)
 class Pager(object):
-    """Display CONTENT in a pager, or on the standard output stream if pager is
-    disabled.
+    """Pager abstraction
+
+    Writes on the standard output stream if no pager is found.
     """
 
     def __init__(self, command):

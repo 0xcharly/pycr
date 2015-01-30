@@ -1,6 +1,4 @@
-"""
-Display the list of changes given the input criterion.
-"""
+"""Display the list of changes given the input criterion"""
 
 import argparse
 import logging
@@ -14,32 +12,28 @@ from libpycr.utils.system import fail
 
 
 class List(Builtin):
-    """Implement the LIST command."""
+    """Implement the LIST command"""
 
     # Logger for this command
     log = logging.getLogger(__name__)
 
     @property
     def description(self):
-        """Inherited."""
         return 'list change(s)'
 
     @staticmethod
     def parse_command_line(arguments):
-        """
-        Parse the LIST command command-line arguments.
+        """Parse the LIST command command-line arguments
 
-        PARAMETERS
-            arguments: a list of command-line arguments to parse
-
-        RETURNS
-            a list of ChangeInfo
+        :param arguments: a list of command-line arguments to parse
+        :type arguments: list[str]
+        :rtype: str, str, bool
         """
 
         parser = argparse.ArgumentParser(
             description='List changes by owner and status.')
         parser.add_argument(
-            '--status', default='open',
+            '--status', default='open', choices=Gerrit.get_all_statuses(),
             help='the status of the changes (default: open)')
 
         exclusive = parser.add_mutually_exclusive_group()
@@ -52,25 +46,20 @@ class List(Builtin):
 
         cmdline = parser.parse_args(arguments)
 
-        if cmdline.status not in Gerrit.get_all_statuses():
-            fail('argument --status: invalid choice "%s" (choose from %s)' %
-                (cmdline.status,
-                 ', '.join(["'%s'" % st for st in Gerrit.get_all_statuses()])))
-
         # Fetch changes details
         return cmdline.owner, cmdline.status, cmdline.watched
 
     @staticmethod
     def tokenize(idx, change):
-        """
-        Token generator for the output.
+        """Token generator for the output
 
-        PARAMETERS
-            idx: index of the change in the list of changes to fetch
-            change: the ChangeInfo corresponding to the change
+        Yields a stream of tokens: tuple of (Token, string).
 
-        RETURNS
-            a stream of tokens: tuple of (Token, string)
+        :param idx: index of the change in the list of changes to fetch
+        :type idx: int
+        :param change: the change
+        :type change: ChangeInfo
+        :yield: tuple[Token, str]
         """
 
         if idx:
@@ -80,8 +69,6 @@ class List(Builtin):
             yield token
 
     def run(self, arguments, *args, **kwargs):
-        """Inherited."""
-
         owner, status, watched = List.parse_command_line(arguments)
 
         try:
