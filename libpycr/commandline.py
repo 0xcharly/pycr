@@ -6,7 +6,6 @@ import sys
 
 from libpycr import get_version
 from libpycr.http import RequestFactory
-from libpycr.meta import Builtin
 from libpycr.utils.introspect import get_all_subclasses
 from libpycr.utils.output import Formatter
 
@@ -15,15 +14,17 @@ from libpycr.utils.output import Formatter
 from libpycr.builtin import *  # NOQA
 
 
-def build_cmdline_parser():
+def build_cmdline_parser(builtin_type):
     """Build and return the command-line parser to use
 
+    :param builtin_type: the type of Builtin to look for
+    :type builtin_type: Builtin
     :rtype: argparse.ArgumentParser
     """
 
     # Create the parser object
     parser = argparse.ArgumentParser(
-        description='Gerrit Code Review Command-line.')
+        description='Gerrit Code Review command line tools')
 
     parser.add_argument(
         '--version', action='version',
@@ -63,7 +64,7 @@ def build_cmdline_parser():
         'builtin', nargs='?', help='display help for that builtin')
 
     # Register all builtins
-    for cmd_class in get_all_subclasses(Builtin):
+    for cmd_class in get_all_subclasses(builtin_type):
         cmd = cmd_class()
         subparser = actions.add_parser(cmd.name, add_help=False,
                                        help=cmd.description)
@@ -72,17 +73,19 @@ def build_cmdline_parser():
     return parser
 
 
-def display_help(cmd_name=None):
+def display_help(builtin_type, cmd_name=None):
     """Display the help message
 
     This includes the program usage and information about the arguments.
 
+    :param builtin_type: the type of Builtin to look for
+    :type builtin_type: Builtin
     :param cmd_name: optional command name for which to display the help
         message. Displays the program-wide help if None.
     :type cmd_name: str
     """
 
-    parser = build_cmdline_parser()
+    parser = build_cmdline_parser(builtin_type)
 
     if cmd_name is None:
         # %(prog)s --help case
@@ -99,21 +102,21 @@ def display_help(cmd_name=None):
             parser.parse_args([cmd_name, '--help'])
 
 
-def parse_command_line(argv):
+def parse_command_line(builtin_type):
     """Parse the command-line arguments
 
     Returns a tuple containing the action to execute, and the arguments to use
     with that action.
 
-    :param argv: the argument array to parse
-    :type argv: list[str]
+    :param builtin_type: the type of Builtin to look for
+    :type builtin_type: Builtin
     :rtype: Function, list[str]
     """
 
-    parser = build_cmdline_parser()
+    parser = build_cmdline_parser(builtin_type)
 
     # Parse the command-line
-    cmdline, remaining = parser.parse_known_args(argv[1:])
+    cmdline, remaining = parser.parse_known_args(sys.argv[1:])
 
     # Activate logging if requested
     if cmdline.debug:
@@ -123,7 +126,7 @@ def parse_command_line(argv):
 
     # Display help if requested (display_help exits the program)
     if cmdline.builtins == 'help':
-        display_help(cmdline.builtin)
+        display_help(builtin_type, cmdline.builtin)
 
     # Configure the HTTP request engine
     RequestFactory.set_unsecure_connection(cmdline.unsecure)

@@ -6,13 +6,13 @@ import os
 
 from libpycr.editor import raw_input_editor, strip_comments
 from libpycr.exceptions import NoSuchChangeError, PyCRError
-from libpycr.gerrit import Gerrit
-from libpycr.meta import Builtin
+from libpycr.gerrit.client import Gerrit
+from libpycr.meta import GitClBuiltin
 from libpycr.utils.output import Formatter, NEW_LINE
 from libpycr.utils.system import ask, fail
 
 
-class Review(Builtin):
+class Review(GitClBuiltin):
     """Implement the REVIEW command"""
 
     log = logging.getLogger(__name__)

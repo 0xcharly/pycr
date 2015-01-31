@@ -1,4 +1,4 @@
-"""This module encapsulate the Gerrit Code Review HTTP API protocol"""
+"""Gerrit Code Review HTTP API client"""
 
 import json
 import logging
@@ -6,215 +6,10 @@ import logging
 from libpycr.exceptions import NoSuchChangeError, ConflictError, RequestError
 from libpycr.exceptions import PyCRError, QueryError
 from libpycr.http import RequestFactory, BASE64
-from libpycr.struct import AccountInfo, ChangeInfo, ReviewInfo, ReviewerInfo
+from libpycr.gerrit.api import changes
+from libpycr.gerrit.entities import (
+    AccountInfo, ChangeInfo, ReviewInfo, ReviewerInfo)
 from libpycr.utils.system import confirm, info
-
-
-class Api(object):
-    """Defines endpoints to the Gerrit Code Review API"""
-
-    @staticmethod
-    def changes_query():
-        """Return an URL to the Gerrit Code Review server
-
-        :rtype: str
-        """
-
-        return '{}/changes/'.format(RequestFactory.get_remote_base_url())
-
-    @staticmethod
-    def changes(change_id):
-        """Return an URL to the Gerrit Code Review server for the given change
-
-        :param change_id: any identification number for the change (UUID,
-            Change-Id, or legacy numeric change ID)
-        :type change_id: str
-        :rtype: str
-        """
-
-        return Api.changes_query() + change_id
-
-    @staticmethod
-    def detailed_changes(change_id):
-        """Return an URL to the Gerrit Code Review server for the given change
-
-        :param change_id: any identification number for the change (UUID,
-            Change-Id, or legacy numeric change ID)
-        :type change_id: str
-        :rtype: str
-        """
-
-        return '{}/detail'.format(Api.changes(change_id))
-
-    @staticmethod
-    def revisions(change_id, revision_id):
-        """Return an URL to the Gerrit Code Review server
-
-        This URL allows queries to a specific reviesion of the given change.
-
-        :param change_id: any identification number for the change (UUID,
-            Change-Id, or legacy numeric change ID)
-        :type change_id: str
-        :param revision_id: identifier that uniquely identifies one revision of
-            a change (current, a commit ID (SHA1) or abbreviated commit ID, or
-            a legacy numeric patch number)
-        :type revision_id: str
-        :rtype: str
-        """
-
-        return '{}/revisions/{}'.format(Api.changes(change_id), revision_id)
-
-    @staticmethod
-    def patch(change_id, revision_id):
-        """Return an URL to the Gerrit Code Review server
-
-        This URL allows queries for the patch of the given change.
-
-        :param change_id: any identification number for the change (UUID,
-            Change-Id, or legacy numeric change ID)
-        :type change_id: str
-        :param revision_id: identifier that uniquely identifies one revision of
-            a change (current, a commit ID (SHA1) or abbreviated commit ID, or
-            a legacy numeric patch number)
-        :type revision_id: str
-        :rtype: str
-        """
-
-        return '{}/patch'.format(Api.revisions(change_id, revision_id))
-
-    @staticmethod
-    def review(change_id, revision_id):
-        """Return an URL to the Gerrit Code Review server
-
-        This URL allows queries to set a review for the given revision of a
-        change.
-
-        :param change_id: any identification number for the change (UUID,
-            Change-Id, or legacy numeric change ID)
-        :type change_id: str
-        :param revision_id: identifier that uniquely identifies one revision of
-            a change (current, a commit ID (SHA1) or abbreviated commit ID, or
-            a legacy numeric patch number)
-        :type revision_id: str
-        :rtype: str
-        """
-
-        return '{}/review'.format(Api.revisions(change_id, revision_id))
-
-    @staticmethod
-    def rebase(change_id):
-        """Return an URL to the Gerrit Code Review server
-
-        This URL allows queries to rebase the given change.
-
-        :param change_id: any identification number for the change (UUID,
-            Change-Id, or legacy numeric change ID)
-        :type change_id: str
-        :rtype: str
-        """
-
-        return '{}/rebase'.format(Api.changes(change_id))
-
-    @staticmethod
-    def submit(change_id):
-        """Return an URL to the Gerrit Code Review server
-
-        This URL allows queries to submit the given change.
-
-        :param change_id: any identification number for the change (UUID,
-            Change-Id, or legacy numeric change ID)
-        :type change_id: str
-        :rtype: str
-        """
-
-        return '{}/submit'.format(Api.changes(change_id))
-
-    @staticmethod
-    def reviewers(change_id):
-        """Return an URL to the Gerrit Code Review server
-
-        This URL allows queries for reviewers of the given change.
-
-        :param change_id: any identification number for the change (UUID,
-            Change-Id, or legacy numeric change ID)
-        :type change_id: str
-        :rtype: str
-        """
-
-        return '{}/reviewers'.format(Api.changes(change_id))
-
-    @staticmethod
-    def reviewer(change_id, account_id):
-        """Return an URL to the Gerrit Code Review server
-
-        This URL allows queries for reviewers of the given change.
-
-        :param change_id: any identification number for the change (UUID,
-            Change-Id, or legacy numeric change ID)
-        :type change_id: str
-        :param account_id: any identification string for an account (name,
-            username, email)
-        :type account_id: str
-        :rtype: str
-        """
-
-        return '{}/{}'.format(Api.reviewers(change_id), account_id)
-
-    @staticmethod
-    def search_query_attr(status=None, owner=None, reviewer=None,
-                          watched=None):
-        """Create a search query compatible with Gerrit Code Review queries
-
-        :param status: the status of changes
-        :type status: str
-        :param owner: the owner of changes
-        :type owner: str
-        :param reviewer: the reviewer of changes
-        :type reviewer: str
-        :param watched: whether the change should be in the watched list or not
-        :type watched: str
-        :rtype: str
-        """
-
-        buf = []
-
-        if status is not None:
-            buf.append('status:%s' % status)
-
-        if owner is not None:
-            buf.append('owner:%s' % owner)
-
-        if reviewer is not None:
-            buf.append('reviewer:%s' % reviewer)
-
-        if watched is not None:
-            buf.append('is:watched')
-
-        return '+'.join(buf)
-
-    @staticmethod
-    def search_query(status=None, owner=None, reviewer=None, watched=None):
-        """Return an URL to the Gerrit Code Review server
-
-        This URL contains the query to perform.
-
-        :param status: the status of changes
-        :type status: str
-        :param owner: the owner of changes
-        :type owner: str
-        :param reviewer: the reviewer of changes
-        :type reviewer: str
-        :rtype: str
-        """
-
-        # NOTE: We can't use the params= parameter of the requests.get
-        # method because this would encode the query string and prevent
-        # Gerrit from parsing it
-
-        return '{}?q={}'.format(
-            Api.changes_query(),
-            Api.search_query_attr(status=status, owner=owner,
-                                  reviewer=reviewer, watched=watched))
 
 
 class Gerrit(object):
@@ -241,8 +36,8 @@ class Gerrit(object):
     def list_watched_changes(cls, status='open'):
         """List user's watched changes
 
-        Sends a GET request to the Gerrit Code Review server to fetch the list
-        of changes with the given STATUS and from the given OWNER.
+        Sends a GET request to Gerrit to fetch the list of changes with the
+        given STATUS and from the given OWNER.
 
         :param status: the status of the change (open, merged, ...)
         :type status: str
@@ -256,7 +51,7 @@ class Gerrit(object):
         cls.log.debug('Watched changes lookup with status:%s', status)
 
         try:
-            endpoint = Api.search_query(status=status, watched=True)
+            endpoint = changes.search_query(status=status, watched=True)
 
             # DETAILED_ACCOUNTS option ensures that the owner email address is
             # sent in the response
@@ -276,8 +71,8 @@ class Gerrit(object):
     def list_changes(cls, status='open', owner='self'):
         """List changes
 
-        Sends a GET request to the Gerrit Code Review server to fetch the list
-        of changes with the given STATUS and from the given OWNER.
+        Sends a GET request to Gerrit to fetch the list of changes with the
+        given STATUS and from the given OWNER.
 
         :param status: the status of the change (open, merged, ...)
         :type status: str
@@ -292,7 +87,7 @@ class Gerrit(object):
             'Changes lookup with status:%s & owner:%s', status, owner)
 
         try:
-            endpoint = Api.search_query(status=status, owner=owner)
+            endpoint = changes.search_query(status=status, owner=owner)
 
             # DETAILED_ACCOUNTS option ensures that the owner email address is
             # sent in the response
@@ -312,8 +107,7 @@ class Gerrit(object):
     def get_change(cls, change_id):
         """Fetch a change details
 
-        Sends a GET request to the Gerrit Code Review server to fetch the data
-        on the given change.
+        Sends a GET request to Gerrit to fetch the data on the given change.
 
         :param change_id: any identification number for the change (UUID,
             Change-Id, or legacy numeric change ID
@@ -326,7 +120,7 @@ class Gerrit(object):
         cls.log.debug('Change lookup: %s', change_id)
 
         try:
-            endpoint = Api.detailed_changes(change_id)
+            endpoint = changes.detailed_changes(change_id)
 
             # CURRENT_REVISION describe the current revision (patch set) of the
             # change, including the commit SHA-1 and URLs to fetch from
@@ -346,8 +140,8 @@ class Gerrit(object):
     def get_patch(cls, change_id, revision_id='current'):
         """Fetch a patch content
 
-        Sends a GET request to the Gerrit Code Review server to fetch the
-        patch for the given change. Returns the diff content.
+        Sends a GET request to Gerrit to fetch the patch for the given change.
+        Returns the diff content.
 
         :param change_id: any identification number for the change (UUID,
             Change-Id, or legacy numeric change ID)
@@ -364,7 +158,7 @@ class Gerrit(object):
         cls.log.debug('Fetch diff: %s (revision: %s)', change_id, revision_id)
 
         try:
-            endpoint = Api.patch(change_id, revision_id)
+            endpoint = changes.patch(change_id, revision_id)
             _, patch = RequestFactory.get(endpoint, encoding=BASE64)
 
         except RequestError as why:
@@ -379,8 +173,7 @@ class Gerrit(object):
     def set_review(cls, score, message, change_id, revision_id='current'):
         """Set a review score
 
-        Sends a POST request to the Gerrit Code Review server to review the
-        given change.
+        Sends a POST request to Gerrit to review the given change.
 
         :param score: the score (-2, -1, 0, +1, +2)
         :type score: str
@@ -411,7 +204,7 @@ class Gerrit(object):
         headers = {'content-type': 'application/json'}
 
         try:
-            endpoint = Api.review(change_id, revision_id)
+            endpoint = changes.review(change_id, revision_id)
             _, review = RequestFactory.post(endpoint,
                                             data=json.dumps(payload),
                                             headers=headers)
@@ -428,8 +221,7 @@ class Gerrit(object):
     def rebase(cls, change_id):
         """Rebase a change
 
-        Sends a POST request to the Gerrit Code Review server to rebase the
-        given change.
+        Sends a POST request to Gerrit to rebase the given change.
 
         :param change_id: any identification number for the change (UUID,
             Change-Id, or legacy numeric change ID)
@@ -443,7 +235,7 @@ class Gerrit(object):
         cls.log.debug('rebase: %s', change_id)
 
         try:
-            _, change = RequestFactory.post(Api.rebase(change_id))
+            _, change = RequestFactory.post(changes.rebase(change_id))
 
         except RequestError as why:
             if why.status_code == 404:
@@ -462,9 +254,8 @@ class Gerrit(object):
     def submit(cls, change_id):
         """Submit a change
 
-        Sends a POST request to the Gerrit Code Review server to submit the
-        given change. Returns True if the change was successfully merged, False
-        otherwise.
+        Sends a POST request to Gerrit to submit the given change. Returns True
+        if the change was successfully merged, False otherwise.
 
         :param change_id: any identification number for the change (UUID,
             Change-Id, or legacy numeric change ID)
@@ -481,7 +272,7 @@ class Gerrit(object):
         headers = {'content-type': 'application/json'}
 
         try:
-            _, change = RequestFactory.post(Api.submit(change_id),
+            _, change = RequestFactory.post(changes.submit(change_id),
                                             data=json.dumps(payload),
                                             headers=headers)
 
@@ -502,8 +293,8 @@ class Gerrit(object):
     def get_reviews(cls, change_id):
         """Fetch the reviews for a change
 
-        Sends a GET request to the Gerrit Code Review server to fetch the
-        reviews for the given change.
+        Sends a GET request to Gerrit to fetch the reviews for the given
+        change.
 
         :param change_id: any identification number for the change (UUID,
             Change-Id, or legacy numeric change ID)
@@ -516,7 +307,7 @@ class Gerrit(object):
         cls.log.debug('Reviews lookup: %s', change_id)
 
         try:
-            endpoint = Api.reviewers(change_id)
+            endpoint = changes.reviewers(change_id)
             _, response = RequestFactory.get(endpoint)
 
         except RequestError as why:
@@ -525,7 +316,7 @@ class Gerrit(object):
 
             raise PyCRError('unexpected error', why)
 
-        # If 'approvals' field is missing, then this is no reviewer
+        # If 'approvals' field is missing, then there is no reviewer
 
         # NOTE: This seems to be against the specifications for this method:
         # https://gerrit-review.googlesource.com/Documentation/
@@ -541,8 +332,8 @@ class Gerrit(object):
     def add_reviewer(cls, change_id, account_id, force=False):
         """Add a reviewer
 
-        Sends a POST request to the Gerrit Code Review server to add one user
-        or all members of one group as reviewer to the change.
+        Sends a POST request to Gerrit to add one user or all members of one
+        group as reviewer to the change.
 
         :param change_id: any identification number for the change (UUID,
             Change-Id, or legacy numeric change ID)
@@ -564,7 +355,7 @@ class Gerrit(object):
         headers = {'content-type': 'application/json'}
 
         try:
-            endpoint = Api.reviewers(change_id)
+            endpoint = changes.reviewers(change_id)
             _, response = RequestFactory.post(endpoint,
                                               data=json.dumps(payload),
                                               headers=headers)
@@ -602,9 +393,9 @@ class Gerrit(object):
     def get_reviewer(cls, change_id, account_id):
         """Fetch a reviewer info
 
-        Sends a GET request to the Gerrit Code Review server to fetch details
-        about a reviewer of a change. Returns None if the reviewer does not
-        exists or is not a reviewer of the change.
+        Sends a GET request to Gerrit to fetch details about a reviewer of a
+        change. Returns None if the reviewer does not exists or is not a
+        reviewer of the change.
 
         :param change_id: any identification number for the change (UUID,
             Change-Id, or legacy numeric change ID)
@@ -619,7 +410,7 @@ class Gerrit(object):
         cls.log.debug('Reviewer lookup: "%s" for %s', account_id, change_id)
 
         try:
-            endpoint = Api.reviewer(change_id, account_id)
+            endpoint = changes.reviewer(change_id, account_id)
             _, response = RequestFactory.get(endpoint)
 
         except RequestError as why:
@@ -635,9 +426,9 @@ class Gerrit(object):
     def delete_reviewer(cls, change_id, account_id):
         """Remove a reviewer from the list of reviewer of a change
 
-        Sends a DELETE request to the Gerrit Code Review server to delete one
-        user from the reviewer's list of a change. Returns None if the reviewer
-        does not exists or is not a reviewer of the change.
+        Sends a DELETE request to Gerrit to delete one user from the reviewer's
+        list of a change. Returns None if the reviewer does not exists or is
+        not a reviewer of the change.
 
         :param change_id: any identification number for the change (UUID,
             Change-Id, or legacy numeric change ID)
@@ -652,7 +443,7 @@ class Gerrit(object):
         cls.log.debug('Delete reviewer: "%s" for %s', account_id, change_id)
 
         try:
-            endpoint = Api.reviewer(change_id, account_id)
+            endpoint = changes.reviewer(change_id, account_id)
 
             _, response = RequestFactory.get(endpoint)
             RequestFactory.delete(endpoint)

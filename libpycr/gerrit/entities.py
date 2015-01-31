@@ -58,10 +58,9 @@ class AccountInfo(Info):
 
     @staticmethod
     def parse(data):
-        """Initialize a AccountInfo object and return it
+        """Create an initialized AccountInfo object
 
-        :param data: the JSON representation of the account as emitted by the
-            Gerrit Code Review server (AccountInfo)
+        :param data: JSON representation of the account as emitted by Gerrit
         :type data: str
         :rtype: AccountInfo
         """
@@ -94,10 +93,9 @@ class GitPersonInfo(Info):
 
     @staticmethod
     def parse(data):
-        """Initialize a GitPersonInfo object and return it
+        """Create an initialized GitPersonInfo object
 
-        :param data: the JSON representation of the change as emitted by the
-            Gerrit Code Review server (GitPersonInfo)
+        :param data: JSON representation of the git person as emitted by Gerrit
         :type data: str
         :rtype: GitPersonInfo
         """
@@ -147,10 +145,9 @@ class CommitInfo(Info):
 
     @staticmethod
     def parse(data):
-        """Initialize a CommitInfo object and return it
+        """Create an initialized CommitInfo object
 
-        :param data: the JSON representation of the change as emitted by the
-            Gerrit Code Review server (CommitInfo)
+        :param data: JSON representation of the commit as emitted by Gerrit
         :type data: str
         :rtype: CommitInfo
         """
@@ -194,10 +191,9 @@ class RevisionInfo(Info):
 
     @staticmethod
     def parse(data):
-        """Initialize a CommitInfo object and return it
+        """Create an initialized CommitInfo object
 
-        :param data: the JSON representation of the change as emitted by the
-            Gerrit Code Review server (CommitInfo)
+        :param data: JSON representation of the revision as emitted by Gerrit
         :type data: str
         :rtype: CommitInfo
         """
@@ -249,10 +245,9 @@ class ChangeInfo(Info):
 
     @staticmethod
     def parse(data):
-        """Initialize a ChangeInfo object and return it
+        """Create an initialized ChangeInfo object
 
-        :param data: the JSON representation of the change as emitted by the
-            Gerrit Code Review server (ChangeInfo)
+        :param data: JSON representation of the change as emitted by Gerrit
         :type data: str
         :rtype: ChangeInfo
         """
@@ -317,10 +312,9 @@ class ReviewerInfo(Info):
 
     @staticmethod
     def parse(data):
-        """Initialize the ReviewerInfo object and return it
+        """Create an initialized ReviewerInfo object
 
-        :param data: the JSON representation of the reviewer as emitted by the
-            Gerrit Code Review server (ReviewerInfo)
+        :param data: JSON representation of the reviewer as emitted by Gerrit
         :type data: str
         :rtype: ReviewerInfo
         """
@@ -357,10 +351,9 @@ class ReviewInfo(Info):
 
     @staticmethod
     def parse(data):
-        """Initialize the ReviewInfo object and return it
+        """Create an initialized ReviewInfo object
 
-        :param data: the JSON representation of the review as emitted by the
-            Gerrit Code Review server (ReviewInfo)
+        :param data: JSON representation of the review as emitted by Gerrit
         :type data: str
         :rtype: ReviewInfo
         """
@@ -369,3 +362,188 @@ class ReviewInfo(Info):
         review.labels = data['labels'].items()
 
         return review
+
+
+class CapabilityInfo(Info):
+    """A capability object"""
+
+    def __init__(self):
+        self.administrate_server = None
+        self.query_limit = None
+        self.create_account = None
+        self.create_group = None
+        self.create_project = None
+        self.email_reviewers = None
+        self.kill_task = None
+        self.view_caches = None
+        self.flush_caches = None
+        self.view_connections = None
+        self.view_queue = None
+        self.run_gc = None
+
+    def tokenize(self):
+        pass  # ???(delay)
+
+    @staticmethod
+    def parse(data):
+        """Create an initialized CapabilityInfo object
+
+        :param data: JSON representation of the capability as emitted by Gerrit
+        :type data: str
+        :rtype: CapabilityInfo
+        """
+
+        capability = CapabilityInfo()
+        capability.administrate_server = data.get('administrateServer', False)
+        capability.query_limit = QueryLimitInfo.parse(data['queryLimit'])
+        capability.create_account = data.get('createAccount', False)
+        capability.create_group = data.get('createGroup', False)
+        capability.create_project = data.get('createProject', False)
+        capability.email_reviewers = data.get('emailReviewers', False)
+        capability.kill_task = data.get('killTask', False)
+        capability.view_caches = data.get('viewCaches', False)
+        capability.flush_caches = data.get('flushCaches', False)
+        capability.view_connections = data.get('viewConnections', False)
+        capability.view_queue = data.get('viewQueue', False)
+        capability.run_gc = data.get('runGC', False)
+
+        return capability
+
+
+class DiffPreferencesInfo(Info):
+    """A diff preferences object"""
+
+    def __init__(self):
+        self.context = None
+        self.expand_all_comments = None
+        self.ignore_whitespaces = None
+        self.intraline_difference = None
+        self.line_length = None
+        self.manual_review = None
+        self.retain_header = None
+        self.show_line_endings = None
+        self.show_tabs = None
+        self.show_whitespace_errors = None
+        self.skip_deleted = None
+        self.skip_uncommented = None
+        self.syntax_highlighting = None
+        self.tab_size = None
+
+    def tokenize(self):
+        pass  # ???(delay)
+
+    @staticmethod
+    def parse(data):
+        """Create an initialized DiffPreferencesInfo object
+
+        :param data: JSON representation of the review as emitted by Gerrit
+        :type data: str
+        :rtype: DiffPreferencesInfo
+        """
+
+        pref = DiffPreferencesInfo()
+        pref.context = data['context']
+        pref.expand_all_comments = data.get('expand_all_comments', False)
+        pref.ignore_whitespaces = data['ignore_whitespaces']
+        pref.intraline_difference = data.get('intraline_difference', False)
+        pref.line_length = data['line_length']
+        pref.manual_review = data.get('manual_review', False)
+        pref.retain_header = data.get('retain_header', False)
+        pref.show_line_endings = data.get('show_line_endings', False)
+        pref.show_tabs = data.get('show_tabs', False)
+        pref.show_whitespace_errors = data.get('show_whitespace_errors', False)
+        pref.skip_deleted = data.get('skip_deleted', False)
+        pref.skip_uncommented = data.get('skip_uncommented', False)
+        pref.syntax_highlighting = data.get('syntax_highlighting', False)
+        pref.tab_size = data['tab_size']
+
+        return pref
+
+
+class EmailInfo(Info):
+    """An email info object"""
+
+    def __init__(self):
+        self.email = None
+        self.preferred = None
+        self.pending_confirmation = None
+
+    def tokenize(self):
+        pass  # ???(delay)
+
+    @staticmethod
+    def parse(data):
+        """Create an initialized EmailInfo object
+
+        :param data: JSON representation of the email as emitted by Gerrit
+        :type data: str
+        :rtype: EmailInfo
+        """
+
+        email = EmailInfo()
+        email.email = data['email']
+        email.preferred = data.get('preferred', False)
+        email.pending_confirmation = data.get('pending_confirmation', False)
+
+        return email
+
+
+class QueryLimitInfo(Info):
+    """A query limit info object"""
+
+    def __init__(self):
+        self.min = None
+        self.max = None
+
+    def tokenize(self):
+        pass  # ???(delay)
+
+    @staticmethod
+    def parse(data):
+        """Create an initialized QueryLimitInfo object
+
+        :param data: JSON representation of the query limit as emitted by
+            Gerrit
+        :type data: str
+        :rtype: QueryLimitInfo
+        """
+
+        limit = QueryLimitInfo()
+        limit.min = int(data['min'])
+        limit.max = int(data['max'])
+
+        return limit
+
+
+class SshKeyInfo(Info):
+    """A SSH key info object"""
+
+    def __init__(self):
+        self.seq = None
+        self.ssh_public_key = None
+        self.encoded_key = None
+        self.algorithm = None
+        self.comment = None
+        self.valid = None
+
+    def tokenize(self):
+        pass  # ???(delay)
+
+    @staticmethod
+    def parse(data):
+        """Create an initialized SshKeyInfo object
+
+        :param data: JSON representation of the ssh key as emitted by Gerrit
+        :type data: str
+        :rtype: SshKeyInfo
+        """
+
+        key = SshKeyInfo()
+        key.seq = int(data['seq'])
+        key.ssh_public_key = data['ssh_public_key']
+        key.encoded_key = data['encoded_key']
+        key.algorithm = data['algorithm']
+        key.comment = data.get('comment', None)
+        key.valid = data['valid']
+
+        return key

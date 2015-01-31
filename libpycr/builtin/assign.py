@@ -3,15 +3,15 @@
 import os
 import sys
 
-from libpycr.changes import fetch_change_list_or_fail
 from libpycr.exceptions import PyCRError
-from libpycr.gerrit import Gerrit
-from libpycr.meta import Builtin
+from libpycr.gerrit.changes import fetch_change_list_or_fail
+from libpycr.gerrit.client import Gerrit
+from libpycr.meta import GitClBuiltin
 from libpycr.utils.output import Formatter, Token, NEW_LINE
 from libpycr.utils.system import fail, warn
 
 
-class Assign(Builtin):
+class Assign(GitClBuiltin):
     """Implement the ASSIGN command"""
 
     @property

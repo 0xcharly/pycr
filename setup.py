@@ -1,8 +1,6 @@
 #! /usr/bin/env python
 
-"""
-Setup configuration file for Gerrit Code Review - Command Line Tools
-"""
+"""Gerrit Code Review - Command Line Tools"""
 
 import os
 from distutils.core import setup
@@ -25,7 +23,8 @@ setup(
     author_email='jcd.delay@gmail.com',
     license='Apache v2',
     description='A Command-line Interface to Gerrit Code Review v2.8',
-    packages=['libpycr', 'libpycr.builtin', 'libpycr.meta', 'libpycr.utils'],
+    packages=['libpycr', 'libpycr.builtin', 'libpycr.gerrit',
+              'libpycr.gerrit.api', 'libpycr.meta', 'libpycr.utils'],
     requires=['requests', 'pygments'],
     scripts=[os.path.join('scripts', 'git-cl')],
 )

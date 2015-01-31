@@ -3,8 +3,6 @@
 from abc import ABCMeta, abstractmethod, abstractproperty
 
 
-# pylint: disable=R0921
-# Disable "Abstract class not referenced"
 class Builtin(object):
     """A Builtin abstract class"""
 
@@ -36,4 +34,24 @@ class Builtin(object):
         :type arguments: list[str]
         :raise: PyCRError on error
         """
+        pass
+
+
+# pylint: disable=abstract-class-not-used
+# Abstract class not referenced (all classes below).
+
+
+class GitClBuiltin(Builtin):
+    """git-cl builtin"""
+
+    @abstractmethod
+    def run(self, arguments, *args, **kwargs):
+        pass
+
+
+class GerritBuiltin(Builtin):
+    """gerrit builtin"""
+
+    @abstractmethod
+    def run(self, arguments, *args, **kwargs):
         pass

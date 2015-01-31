@@ -4,14 +4,14 @@ import argparse
 import logging
 
 from libpycr.exceptions import QueryError, PyCRError
-from libpycr.gerrit import Gerrit
-from libpycr.meta import Builtin
+from libpycr.gerrit.client import Gerrit
+from libpycr.meta import GitClBuiltin
 from libpycr.pager import Pager
 from libpycr.utils.output import Formatter, NEW_LINE
 from libpycr.utils.system import fail
 
 
-class List(Builtin):
+class List(GitClBuiltin):
     """Implement the LIST command"""
 
     # Logger for this command

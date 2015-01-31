@@ -4,13 +4,13 @@ import argparse
 import logging
 
 from libpycr.exceptions import NoSuchChangeError, PyCRError
-from libpycr.gerrit import Gerrit
-from libpycr.meta import Builtin
+from libpycr.gerrit.client import Gerrit
+from libpycr.meta import GitClBuiltin
 from libpycr.utils.output import Formatter, Token, NEW_LINE
 from libpycr.utils.system import fail
 
 
-class Submit(Builtin):
+class Submit(GitClBuiltin):
     """Implement the SUBMIT command"""
 
     # Logger for this command

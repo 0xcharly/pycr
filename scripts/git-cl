@@ -1,51 +1,14 @@
 #! /usr/bin/env python
 
-"""Command-line tool to interogate an instance of a Gerrit Code Review server
-"""
+"""Integrate Gerrit with Git"""
 
 # pylint: disable=C0103
 # Disable "Invalid module name" (this is not a module but a script)
 
-import os
-import sys
+from libpycr.main import builtin_main
+from libpycr.meta import GitClBuiltin
 
-from libpycr.commandline import parse_command_line
-from libpycr.config import Config
-from libpycr.exceptions import PyCRError
-from libpycr.utils.system import format_message
-
-
-def cl_main(args):
-    """The main function of this module
-
-    Takes care of parsing the command line and process the user request.
-
-    :param args: the argument array as provided on the command-line
-    :type args: list[str]
-    """
-
-    try:
-        # Load various input configurations
-        Config.load_all()
-
-        # Fetch the result of the command-line parsing
-        command, command_arguments = parse_command_line(args)
-
-        # Execute the requested command
-        command.run(command_arguments)
-
-    except PyCRError as why:
-        sys.exit(format_message(str(why), prefix='fatal'))
-
-    except KeyboardInterrupt:
-        sys.exit('%sInterruption caught...' % os.linesep)
-
-    sys.exit()
-
-
-# Script entry point
-# If executed (and not imported), parse the command line and process the
-# request.
+# git-cl entry point
 
 if __name__ == '__main__':
-    cl_main(sys.argv)
+    builtin_main(GitClBuiltin)

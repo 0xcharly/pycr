@@ -3,7 +3,7 @@
 import re
 
 from libpycr.exceptions import NoSuchChangeError
-from libpycr.gerrit import Gerrit
+from libpycr.gerrit.client import Gerrit
 from libpycr.http import RequestFactory
 from libpycr.utils.system import fail, warn
 

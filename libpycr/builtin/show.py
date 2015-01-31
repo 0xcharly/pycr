@@ -2,17 +2,17 @@
 
 import argparse
 
-from libpycr.changes import fetch_change_list_or_fail
 from libpycr.exceptions import PyCRError
-from libpycr.gerrit import Gerrit
-from libpycr.meta import Builtin
+from libpycr.gerrit.changes import fetch_change_list_or_fail
+from libpycr.gerrit.client import Gerrit
+from libpycr.meta import GitClBuiltin
 from libpycr.pager import Pager
 from libpycr.utils.commandline import expect_changes_as_positional
 from libpycr.utils.output import Formatter, NEW_LINE
 from libpycr.utils.system import warn
 
 
-class Show(Builtin):
+class Show(GitClBuiltin):
     """Implement the SHOW command"""
 
     @property
