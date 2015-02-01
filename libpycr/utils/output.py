@@ -18,6 +18,16 @@ from pygments.token import Token as Token
 NEW_LINE = (Token.Whitespace, os.linesep)
 
 
+def checkmark(boolean):
+    """Return an unicode checkmark or cross mark
+
+    :param boolean: the input value
+    :type boolean: bool
+    :rtype: str
+    """
+    return u'\u2713' if boolean else u'\u2717'
+
+
 def update_dict(origin, extras):
     """Update the content of ORIGIN with the content of EXTRAS
 

@@ -10,6 +10,7 @@ from libpycr.gerrit.client import Gerrit
 from libpycr.meta import GerritAccountBuiltin
 from libpycr.pager import Pager
 from libpycr.utils.commandline import expect_account_as_positional
+from libpycr.utils.output import checkmark
 from libpycr.utils.system import fail
 
 from prettytable import PrettyTable
@@ -62,8 +63,7 @@ class LsSshKeys(GerritAccountBuiltin):
 
         for key in keys:
             table.add_row([key.seq, key.algorithm, key.comment,
-                           u'\u2713' if key.valid else u'\u2717',
-                           key.encoded_key])
+                           checkmark(key.valid), key.encoded_key])
 
         with Pager(command=self.name):
             print 'Account: {}'.format(account.username)

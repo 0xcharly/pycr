@@ -10,6 +10,7 @@ from libpycr.gerrit.client import Gerrit
 from libpycr.meta import GerritAccountBuiltin
 from libpycr.pager import Pager
 from libpycr.utils.commandline import expect_account_as_positional
+from libpycr.utils.output import checkmark
 from libpycr.utils.system import fail
 
 from prettytable import PrettyTable
@@ -61,7 +62,7 @@ class LsEmails(GerritAccountBuiltin):
 
         for email in emails:
             table.add_row([email.email,
-                           u'\u2713' if email.preferred else '',
+                           checkmark(True) if email.preferred else '',
                            'No' if email.pending_confirmation else 'Yes'])
 
         with Pager(command=self.name):
