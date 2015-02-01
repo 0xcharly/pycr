@@ -7,7 +7,7 @@ from libpycr.exceptions import PyCRError
 from libpycr.gerrit.changes import fetch_change_list_or_fail
 from libpycr.gerrit.client import Gerrit
 from libpycr.meta import GitClBuiltin
-from libpycr.utils.output import Formatter, Token, NEW_LINE
+from libpycr.utils.output import Formatter, NEW_LINE, Token
 from libpycr.utils.system import fail, warn
 
 
@@ -29,7 +29,7 @@ class Assign(GitClBuiltin):
         buf = [('usage: %s assign [-h] CL [CL ...] '
                 '[+/-REVIEWER [+/-REVIEWER ...]]')]
         buf.append('')
-        buf.append('Add or delete reviewer(s) to one or more changes.')
+        buf.append('Add or delete reviewer(s) to one or more changes')
         buf.append('')
         buf.append('positional arguments:')
         buf.append(('  CL             '

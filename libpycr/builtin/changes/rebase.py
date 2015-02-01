@@ -6,7 +6,7 @@ import logging
 from libpycr.exceptions import NoSuchChangeError, PyCRError
 from libpycr.gerrit.client import Gerrit
 from libpycr.meta import GitClBuiltin
-from libpycr.utils.output import Formatter, Token, NEW_LINE
+from libpycr.utils.output import Formatter, NEW_LINE, Token
 from libpycr.utils.system import fail
 
 
@@ -31,7 +31,7 @@ class Rebase(GitClBuiltin):
         :rtype: str, str
         """
 
-        parser = argparse.ArgumentParser(description='Rebase a change.')
+        parser = argparse.ArgumentParser(description='Rebase a change')
         parser.add_argument(
             'change_id', metavar='CL',
             help='Gerrit Code Review CL / CL range / Change-Id')

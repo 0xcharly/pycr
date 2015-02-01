@@ -31,7 +31,7 @@ class List(GitClBuiltin):
         """
 
         parser = argparse.ArgumentParser(
-            description='List changes by owner and status.')
+            description='List changes by owner and status')
         parser.add_argument(
             '--status', default='open', choices=Gerrit.get_all_statuses(),
             help='the status of the changes (default: open)')
