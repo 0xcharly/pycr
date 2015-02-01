@@ -9,10 +9,6 @@ from libpycr.http import RequestFactory
 from libpycr.utils.introspect import get_all_subclasses
 from libpycr.utils.output import Formatter
 
-# pylint: disable=W0401
-# Disable "Wildcard import"
-from libpycr.builtin import *  # NOQA
-
 
 def build_cmdline_parser(builtin_type):
     """Build and return the command-line parser to use

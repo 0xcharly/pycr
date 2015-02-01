@@ -2,8 +2,8 @@
 
 """Integrate Gerrit with Git"""
 
-# pylint: disable=C0103
-# Disable "Invalid module name" (this is not a module but a script)
+# pylint: disable=invalid-name, wildcard-import
+from libpycr.builtin.changes import *  # NOQA
 
 from libpycr.main import builtin_main
 from libpycr.meta import GitClBuiltin

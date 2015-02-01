@@ -49,8 +49,8 @@ class GitClBuiltin(Builtin):
         pass
 
 
-class GerritBuiltin(Builtin):
-    """gerrit builtin"""
+class GerritAccountBuiltin(Builtin):
+    """gerrit-account builtin"""
 
     @abstractmethod
     def run(self, arguments, *args, **kwargs):
