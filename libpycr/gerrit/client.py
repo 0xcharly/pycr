@@ -8,7 +8,7 @@ from libpycr.exceptions import PyCRError, QueryError
 from libpycr.http import RequestFactory, BASE64
 from libpycr.gerrit.api import accounts, changes
 from libpycr.gerrit.entities import (
-    AccountInfo, ChangeInfo, EmailInfo, ReviewInfo, ReviewerInfo)
+    AccountInfo, ChangeInfo, EmailInfo, ReviewInfo, ReviewerInfo, SshKeyInfo)
 from libpycr.utils.system import confirm, info
 
 
@@ -505,6 +505,29 @@ class Gerrit(object):
             if why.status_code == 404:
                 raise QueryError('no such account')
 
-            raise PyCRError('cannot fetch account details', why)
+            raise PyCRError('cannot fetch account emails', why)
 
         return tuple([EmailInfo.parse(e) for e in response])
+
+    @classmethod
+    def get_ssh_keys(cls, account_id='self'):
+        """Fetch Gerrit account SSH keys
+
+        :param account_id: identifier that uniquely identifies one account
+        :type account: str
+        :rtype: tuple[SshKeyInfo]
+        :raise: PyCRError on any other error
+        """
+
+        cls.log.debug('List Gerrit account SSH keys')
+
+        try:
+            _, response = RequestFactory.get(accounts.ssh_keys(account_id))
+
+        except RequestError as why:
+            if why.status_code == 404:
+                raise QueryError('no such account')
+
+            raise PyCRError('cannot fetch account SSH keys', why)
+
+        return tuple([SshKeyInfo.parse(k) for k in response])
