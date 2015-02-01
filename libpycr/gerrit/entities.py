@@ -2,7 +2,7 @@
 
 from abc import ABCMeta, abstractmethod
 
-from libpycr.utils.output import Formatter, Token, NEW_LINE
+from libpycr.utils.output import Formatter, NEW_LINE, Token
 
 
 # pylint: disable=R0902,R0903
@@ -41,6 +41,15 @@ class AccountInfo(Info):
         self.name = None
         self.email = None
         self.username = None
+
+    def __hash__(self):
+        # A username is expected to be unique
+        return hash(self.username)
+
+    def __cmp__(self, other):
+        # Both __hash__ and __cmp__ are needed for set() to uniquify a list of
+        # AccountInfo.
+        return cmp(self.username, other.username)
 
     def tokenize(self):
         # If email is available:

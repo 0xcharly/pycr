@@ -25,6 +25,9 @@ setup(
     description='A Command-line Interface to Gerrit Code Review v2.8',
     packages=['libpycr', 'libpycr.builtin', 'libpycr.gerrit',
               'libpycr.gerrit.api', 'libpycr.meta', 'libpycr.utils'],
-    requires=['requests', 'pygments'],
-    scripts=[os.path.join('scripts', 'git-cl')],
+    requires=['requests', 'pygments', 'prettytable'],
+    scripts=[
+        os.path.join('scripts', 'git-cl'),
+        os.path.join('scripts', 'gerrit-accounts')
+    ]
 )

@@ -6,7 +6,7 @@ import logging
 from libpycr.exceptions import NoSuchChangeError, ConflictError, RequestError
 from libpycr.exceptions import PyCRError, QueryError
 from libpycr.http import RequestFactory, BASE64
-from libpycr.gerrit.api import changes
+from libpycr.gerrit.api import accounts, changes
 from libpycr.gerrit.entities import (
     AccountInfo, ChangeInfo, ReviewInfo, ReviewerInfo)
 from libpycr.utils.system import confirm, info
@@ -461,3 +461,26 @@ class Gerrit(object):
 
         assert len(response) == 1
         return ReviewerInfo.parse(response[0])
+
+    @classmethod
+    def get_account(cls, account_id='self'):
+        """Fetch Gerrit account details
+
+        :param account_id: identifier that uniquely identifies one account
+        :type account: str
+        :rtype: tuple[AccountInfo]
+        :raise: PyCRError on any other error
+        """
+
+        cls.log.debug('List Gerrit accounts')
+
+        try:
+            _, response = RequestFactory.get(accounts.account(account_id))
+
+        except RequestError as why:
+            if why.status_code == 404:
+                raise QueryError('no such account')
+
+            raise PyCRError('cannot fetch account details', why)
+
+        return AccountInfo.parse(response)
