@@ -23,7 +23,8 @@ setup(
     author_email='jcd.delay@gmail.com',
     license='Apache v2',
     description='A Command-line Interface to Gerrit Code Review v2.8',
-    packages=['libpycr', 'libpycr.builtin', 'libpycr.gerrit',
+    packages=['libpycr', 'libpycr.builtin', 'libpycr.builtin.changes',
+              'libpycr.builtin.accounts', 'libpycr.gerrit',
               'libpycr.gerrit.api', 'libpycr.meta', 'libpycr.utils'],
     requires=['requests', 'pygments', 'prettytable'],
     scripts=[
