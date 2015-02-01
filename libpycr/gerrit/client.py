@@ -8,7 +8,7 @@ from libpycr.exceptions import PyCRError, QueryError
 from libpycr.http import RequestFactory, BASE64
 from libpycr.gerrit.api import accounts, changes
 from libpycr.gerrit.entities import (
-    AccountInfo, ChangeInfo, ReviewInfo, ReviewerInfo)
+    AccountInfo, ChangeInfo, EmailInfo, ReviewInfo, ReviewerInfo)
 from libpycr.utils.system import confirm, info
 
 
@@ -65,7 +65,7 @@ class Gerrit(object):
 
             raise PyCRError('cannot fetch change details', why)
 
-        return (ChangeInfo.parse(c) for c in response)
+        return tuple([ChangeInfo.parse(c) for c in response])
 
     @classmethod
     def list_changes(cls, status='open', owner='self'):
@@ -101,7 +101,7 @@ class Gerrit(object):
 
             raise PyCRError('cannot fetch change details', why)
 
-        return (ChangeInfo.parse(c) for c in response)
+        return tuple([ChangeInfo.parse(c) for c in response])
 
     @classmethod
     def get_change(cls, change_id):
@@ -326,7 +326,8 @@ class Gerrit(object):
         # experiences show that it's not always the case, and that the change
         # owner can also be in the list although not a reviewers.
 
-        return (ReviewerInfo.parse(r) for r in response if 'approvals' in r)
+        return tuple(
+            [ReviewerInfo.parse(r) for r in response if 'approvals' in r])
 
     @classmethod
     def add_reviewer(cls, change_id, account_id, force=False):
@@ -387,7 +388,7 @@ class Gerrit(object):
                 raise PyCRError('unexpected error', why)
 
         assert 'reviewers' in response, '"reviewers" not in HTTP response'
-        return (AccountInfo.parse(r) for r in response['reviewers'])
+        return tuple([AccountInfo.parse(r) for r in response['reviewers']])
 
     @classmethod
     def get_reviewer(cls, change_id, account_id):
@@ -468,7 +469,7 @@ class Gerrit(object):
 
         :param account_id: identifier that uniquely identifies one account
         :type account: str
-        :rtype: tuple[AccountInfo]
+        :rtype: AccountInfo
         :raise: PyCRError on any other error
         """
 
@@ -484,3 +485,26 @@ class Gerrit(object):
             raise PyCRError('cannot fetch account details', why)
 
         return AccountInfo.parse(response)
+
+    @classmethod
+    def get_emails(cls, account_id='self'):
+        """Fetch Gerrit account emails
+
+        :param account_id: identifier that uniquely identifies one account
+        :type account: str
+        :rtype: tuple[EmailInfo]
+        :raise: PyCRError on any other error
+        """
+
+        cls.log.debug('List Gerrit account emails')
+
+        try:
+            _, response = RequestFactory.get(accounts.emails(account_id))
+
+        except RequestError as why:
+            if why.status_code == 404:
+                raise QueryError('no such account')
+
+            raise PyCRError('cannot fetch account details', why)
+
+        return tuple([EmailInfo.parse(e) for e in response])

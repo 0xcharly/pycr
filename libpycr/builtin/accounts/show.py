@@ -1,4 +1,4 @@
-"""Display the list of changes given the input criterion"""
+"""Display the account(s) details"""
 
 import argparse
 import logging
