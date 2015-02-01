@@ -41,3 +41,10 @@ class RequestError(PyCRError):
         self.response = response
         self.status_code = status_code
         super(RequestError, self).__init__(message, cause)
+
+
+class UnexpectedError(PyCRError):
+    """Exception raised when an unexpected error occured"""
+
+    def __init__(self, cause=None):
+        super(UnexpectedError, self).__init__('unexpected error', cause)

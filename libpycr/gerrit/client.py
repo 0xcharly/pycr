@@ -3,12 +3,14 @@
 import json
 import logging
 
-from libpycr.exceptions import NoSuchChangeError, ConflictError, RequestError
+from libpycr.exceptions import (
+    ConflictError, NoSuchChangeError, RequestError, UnexpectedError)
 from libpycr.exceptions import PyCRError, QueryError
 from libpycr.http import RequestFactory, BASE64
 from libpycr.gerrit.api import accounts, changes
 from libpycr.gerrit.entities import (
-    AccountInfo, ChangeInfo, EmailInfo, ReviewInfo, ReviewerInfo, SshKeyInfo)
+    AccountInfo, CapabilityInfo, ChangeInfo, EmailInfo, ReviewInfo,
+    ReviewerInfo, SshKeyInfo)
 from libpycr.utils.system import confirm, info
 
 
@@ -63,7 +65,7 @@ class Gerrit(object):
             if why.status_code == 404:
                 raise QueryError('no result for query criterion')
 
-            raise PyCRError('cannot fetch change details', why)
+            raise UnexpectedError(why)
 
         return tuple([ChangeInfo.parse(c) for c in response])
 
@@ -99,7 +101,7 @@ class Gerrit(object):
             if why.status_code == 404:
                 raise QueryError('no result for query criterion')
 
-            raise PyCRError('cannot fetch change details', why)
+            raise UnexpectedError(why)
 
         return tuple([ChangeInfo.parse(c) for c in response])
 
@@ -132,7 +134,7 @@ class Gerrit(object):
             if why.status_code == 404:
                 raise NoSuchChangeError(change_id)
 
-            raise PyCRError('cannot fetch change details', why)
+            raise UnexpectedError(why)
 
         return ChangeInfo.parse(response)
 
@@ -165,7 +167,7 @@ class Gerrit(object):
             if why.status_code == 404:
                 raise NoSuchChangeError(change_id)
 
-            raise PyCRError('unexpected error', why)
+            raise UnexpectedError(why)
 
         return patch
 
@@ -213,7 +215,7 @@ class Gerrit(object):
             if why.status_code == 404:
                 raise NoSuchChangeError(change_id)
 
-            raise PyCRError('unexpected error', why)
+            raise UnexpectedError(why)
 
         return ReviewInfo.parse(review)
 
@@ -246,7 +248,7 @@ class Gerrit(object):
                 # Error message is return as PLAIN text
                 raise ConflictError(why.response.text.strip())
 
-            raise PyCRError('unexpected error', why)
+            raise UnexpectedError(why)
 
         return ChangeInfo.parse(change)
 
@@ -285,7 +287,7 @@ class Gerrit(object):
                 # Error message is return as PLAIN text
                 raise ConflictError(why.response.text.strip())
 
-            raise PyCRError('unexpected error', why)
+            raise UnexpectedError(why)
 
         return ChangeInfo.parse(change).status == ChangeInfo.MERGED
 
@@ -314,7 +316,7 @@ class Gerrit(object):
             if why.status_code == 404:
                 raise NoSuchChangeError(change_id)
 
-            raise PyCRError('unexpected error', why)
+            raise UnexpectedError(why)
 
         # If 'approvals' field is missing, then there is no reviewer
 
@@ -365,7 +367,7 @@ class Gerrit(object):
             if why.status_code == 404:
                 raise NoSuchChangeError(change_id)
 
-            raise PyCRError('unexpected error', why)
+            raise UnexpectedError(why)
 
         if 'confirm' in response:
             assert 'error' in response, 'missing "error" field in response'
@@ -385,7 +387,7 @@ class Gerrit(object):
                                                   headers=headers)
 
             except RequestError as why:
-                raise PyCRError('unexpected error', why)
+                raise UnexpectedError(why)
 
         assert 'reviewers' in response, '"reviewers" not in HTTP response'
         return tuple([AccountInfo.parse(r) for r in response['reviewers']])
@@ -419,7 +421,7 @@ class Gerrit(object):
                 # The user does not exist or is not a reviewer of the change
                 return None
 
-            raise PyCRError('unexpected error', why)
+            raise UnexpectedError(why)
 
         return ReviewerInfo.parse(response)
 
@@ -458,7 +460,7 @@ class Gerrit(object):
                 # The user does not exist or is not a reviewer of the change
                 return None
 
-            raise PyCRError('unexpected error', why)
+            raise UnexpectedError(why)
 
         assert len(response) == 1
         return ReviewerInfo.parse(response[0])
@@ -482,7 +484,7 @@ class Gerrit(object):
             if why.status_code == 404:
                 raise QueryError('no such account')
 
-            raise PyCRError('cannot fetch account details', why)
+            raise UnexpectedError(why)
 
         return AccountInfo.parse(response)
 
@@ -505,7 +507,7 @@ class Gerrit(object):
             if why.status_code == 404:
                 raise QueryError('no such account')
 
-            raise PyCRError('cannot fetch account emails', why)
+            raise UnexpectedError(why)
 
         return tuple([EmailInfo.parse(e) for e in response])
 
@@ -528,6 +530,29 @@ class Gerrit(object):
             if why.status_code == 404:
                 raise QueryError('no such account')
 
-            raise PyCRError('cannot fetch account SSH keys', why)
+            raise UnexpectedError(why)
 
         return tuple([SshKeyInfo.parse(k) for k in response])
+
+    @classmethod
+    def get_capabilities(cls, account_id='self'):
+        """Fetch Gerrit account capabilities
+
+        :param account_id: identifier that uniquely identifies one account
+        :type account: str
+        :rtype: CapabilityInfo
+        :raise: PyCRError on any other error
+        """
+
+        cls.log.debug('List Gerrit account capabilities')
+
+        try:
+            _, response = RequestFactory.get(accounts.capabilities(account_id))
+
+        except RequestError as why:
+            if why.status_code == 404:
+                raise QueryError('no such account')
+
+            raise UnexpectedError(why)
+
+        return CapabilityInfo.parse(response)
