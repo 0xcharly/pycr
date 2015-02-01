@@ -75,7 +75,7 @@ class Show(GitClBuiltin):
             yield token
 
     def run(self, arguments, *args, **kwargs):
-        changes = Show.parse_command_line(arguments)
+        changes = self.parse_command_line(arguments)
         assert changes, 'unexpected empty list'
 
         with Pager(command=self.name):

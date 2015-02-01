@@ -130,7 +130,7 @@ class Assign(GitClBuiltin):
                 yield token
 
     def run(self, arguments, *args, **kwargs):
-        changes, to_add, to_del = Assign.parse_command_line(arguments)
+        changes, to_add, to_del = self.parse_command_line(arguments)
         assert changes, 'unexpected empty list'
 
         for idx, change in enumerate(changes):

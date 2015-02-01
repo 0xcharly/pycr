@@ -68,7 +68,7 @@ class Review(GitClBuiltin):
             yield token
 
     def run(self, arguments, *args, **kwargs):
-        change_id, score, message = Review.parse_command_line(arguments)
+        change_id, score, message = self.parse_command_line(arguments)
 
         try:
             change = Gerrit.get_change(change_id)

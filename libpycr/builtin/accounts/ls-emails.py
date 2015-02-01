@@ -47,7 +47,7 @@ class LsEmails(GerritAccountBuiltin):
         return cmdline.account
 
     def run(self, arguments, *args, **kwargs):
-        account_id = LsEmails.parse_command_line(arguments)
+        account_id = self.parse_command_line(arguments)
 
         try:
             account = Gerrit.get_account(account_id or 'self')

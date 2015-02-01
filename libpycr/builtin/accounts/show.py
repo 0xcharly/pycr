@@ -41,7 +41,7 @@ class Show(GerritAccountBuiltin):
         return cmdline.account
 
     def run(self, arguments, *args, **kwargs):
-        account_ids = Show.parse_command_line(arguments)
+        account_ids = self.parse_command_line(arguments)
 
         try:
             accounts = (Gerrit.get_account(a) for a in account_ids or ['self'])

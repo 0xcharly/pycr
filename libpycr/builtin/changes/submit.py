@@ -62,7 +62,7 @@ class Submit(GitClBuiltin):
         yield Token.Text, ')'
 
     def run(self, arguments, *args, **kwargs):
-        change_id = Submit.parse_command_line(arguments)
+        change_id = self.parse_command_line(arguments)
 
         try:
             change = Gerrit.get_change(change_id)

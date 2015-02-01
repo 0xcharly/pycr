@@ -69,7 +69,7 @@ class List(GitClBuiltin):
             yield token
 
     def run(self, arguments, *args, **kwargs):
-        owner, status, watched = List.parse_command_line(arguments)
+        owner, status, watched = self.parse_command_line(arguments)
 
         try:
             if watched:
