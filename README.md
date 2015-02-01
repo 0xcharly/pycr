@@ -22,5 +22,5 @@ Then run:
 
 to see the list of pending changes.
 
-With git-cl you can review, submit or rebase a change. See git cl -h for more
-info.
+With `git-cl` you can review, submit or rebase a change. See `git cl -h` for
+more info.
