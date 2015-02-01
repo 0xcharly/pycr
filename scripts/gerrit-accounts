@@ -1,0 +1,14 @@
+#! /usr/bin/env python
+
+"""Administrate a Gerrit instance accounts"""
+
+# pylint: disable=invalid-name, wildcard-import, unused-wildcard-import
+from libpycr.builtin.accounts import *  # NOQA
+
+from libpycr.main import builtin_main
+from libpycr.meta import GerritAccountBuiltin
+
+# gerrit-account entry point
+
+if __name__ == '__main__':
+    builtin_main(GerritAccountBuiltin)
