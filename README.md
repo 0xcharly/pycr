@@ -6,7 +6,7 @@ A Command-Line Interface to Gerrit Code Review v2.8
 Quick start
 -----------
 
-Create a file named ~/.gitreview with the following content:
+Create a file named `~/.gitreview` with the following content:
 
      [gerrit]
      username = <your username>
