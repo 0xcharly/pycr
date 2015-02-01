@@ -54,7 +54,7 @@ class LsEmails(GerritAccountBuiltin):
             emails = Gerrit.get_emails(account_id or 'self')
 
         except PyCRError as why:
-            fail('cannot list accounts', why)
+            fail('cannot list account emails', why)
 
         table = PrettyTable(['Email', 'Preferred', 'Confirmed'])
         table.align = 'l'
