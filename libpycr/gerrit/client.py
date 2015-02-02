@@ -9,8 +9,8 @@ from libpycr.exceptions import PyCRError, QueryError
 from libpycr.http import RequestFactory, BASE64
 from libpycr.gerrit.api import accounts, changes
 from libpycr.gerrit.entities import (
-    AccountInfo, CapabilityInfo, ChangeInfo, EmailInfo, ReviewInfo,
-    ReviewerInfo, SshKeyInfo)
+    AccountInfo, CapabilityInfo, ChangeInfo, DiffPreferencesInfo, EmailInfo,
+    ReviewInfo, ReviewerInfo, SshKeyInfo)
 from libpycr.utils.system import confirm, info
 
 
@@ -556,3 +556,27 @@ class Gerrit(object):
             raise UnexpectedError(why)
 
         return CapabilityInfo.parse(response)
+
+    @classmethod
+    def get_diff_prefs(cls, account_id='self'):
+        """Fetch Gerrit account diff preferences
+
+        :param account_id: identifier that uniquely identifies one account
+        :type account: str
+        :rtype: CapabilityInfo
+        :raise: PyCRError on any other error
+        """
+
+        cls.log.debug('List Gerrit account diff preferences')
+
+        try:
+            _, response = RequestFactory.get(
+                accounts.diff_preferences(account_id))
+
+        except RequestError as why:
+            if why.status_code == 404:
+                raise QueryError('no such account')
+
+            raise UnexpectedError(why)
+
+        return DiffPreferencesInfo.parse(response)

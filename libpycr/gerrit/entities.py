@@ -425,7 +425,7 @@ class DiffPreferencesInfo(Info):
     def __init__(self):
         self.context = None
         self.expand_all_comments = None
-        self.ignore_whitespaces = None
+        self.ignore_whitespace = None
         self.intraline_difference = None
         self.line_length = None
         self.manual_review = None
@@ -453,7 +453,7 @@ class DiffPreferencesInfo(Info):
         pref = DiffPreferencesInfo()
         pref.context = data['context']
         pref.expand_all_comments = data.get('expand_all_comments', False)
-        pref.ignore_whitespaces = data['ignore_whitespaces']
+        pref.ignore_whitespace = data['ignore_whitespace']
         pref.intraline_difference = data.get('intraline_difference', False)
         pref.line_length = data['line_length']
         pref.manual_review = data.get('manual_review', False)
