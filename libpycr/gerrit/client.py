@@ -580,3 +580,27 @@ class Gerrit(object):
             raise UnexpectedError(why)
 
         return DiffPreferencesInfo.parse(response)
+
+    @classmethod
+    def get_starred_changes(cls, account_id='self'):
+        """Fetch Gerrit account starred changes
+
+        :param account_id: identifier that uniquely identifies one account
+        :type account: str
+        :rtype: CapabilityInfo
+        :raise: PyCRError on any other error
+        """
+
+        cls.log.debug('List Gerrit account starred changes')
+
+        try:
+            _, response = RequestFactory.get(
+                accounts.starred_changes(account_id))
+
+        except RequestError as why:
+            if why.status_code == 404:
+                raise QueryError('no such account')
+
+            raise UnexpectedError(why)
+
+        return tuple([ChangeInfo.parse(c) for c in response])
