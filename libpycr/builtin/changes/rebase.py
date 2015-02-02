@@ -74,4 +74,4 @@ class Rebase(GitClBuiltin):
         except PyCRError as why:
             fail('cannot rebase', why)
 
-        print Formatter.format(Rebase.tokenize(change))
+        print Formatter.format(self.tokenize(change))

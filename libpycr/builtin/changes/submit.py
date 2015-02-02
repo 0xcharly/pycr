@@ -77,4 +77,4 @@ class Submit(GitClBuiltin):
         except PyCRError as why:
             fail('cannot submit', why)
 
-        print Formatter.format(Submit.tokenize(change))
+        print Formatter.format(self.tokenize(change))

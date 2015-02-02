@@ -87,4 +87,4 @@ class List(GitClBuiltin):
 
         with Pager(command=self.name):
             for idx, change in enumerate(changes):
-                print Formatter.format(List.tokenize(idx, change))
+                print Formatter.format(self.tokenize(idx, change))

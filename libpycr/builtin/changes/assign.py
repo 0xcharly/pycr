@@ -161,5 +161,4 @@ class Assign(GitClBuiltin):
                     warn('{}: cannot delete reviewer {}'.format(
                         change.change_id[:9], account_id), why)
 
-            print Formatter.format(
-                Assign.tokenize(idx, change, added, deleted))
+            print Formatter.format(self.tokenize(idx, change, added, deleted))

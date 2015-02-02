@@ -90,4 +90,4 @@ class Show(GitClBuiltin):
                     continue
 
                 print Formatter.format(
-                    Show.tokenize(idx, change, reviews, patch))
+                    self.tokenize(idx, change, reviews, patch))

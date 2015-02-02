@@ -100,4 +100,4 @@ class Review(GitClBuiltin):
         except PyCRError as why:
             fail('cannot post review', why)
 
-        print Formatter.format(Review.tokenize(change, review))
+        print Formatter.format(self.tokenize(change, review))
