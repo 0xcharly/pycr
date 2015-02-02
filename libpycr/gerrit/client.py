@@ -10,7 +10,7 @@ from libpycr.http import RequestFactory, BASE64
 from libpycr.gerrit.api import accounts, changes
 from libpycr.gerrit.entities import (
     AccountInfo, CapabilityInfo, ChangeInfo, DiffPreferencesInfo, EmailInfo,
-    ReviewInfo, ReviewerInfo, SshKeyInfo)
+    GroupInfo, ReviewInfo, ReviewerInfo, SshKeyInfo)
 from libpycr.utils.system import confirm, info
 
 
@@ -563,7 +563,7 @@ class Gerrit(object):
 
         :param account_id: identifier that uniquely identifies one account
         :type account: str
-        :rtype: CapabilityInfo
+        :rtype: DiffPreferencesInfo
         :raise: PyCRError on any other error
         """
 
@@ -587,7 +587,7 @@ class Gerrit(object):
 
         :param account_id: identifier that uniquely identifies one account
         :type account: str
-        :rtype: CapabilityInfo
+        :rtype: tuple[ChangeInfo]
         :raise: PyCRError on any other error
         """
 
@@ -604,3 +604,26 @@ class Gerrit(object):
             raise UnexpectedError(why)
 
         return tuple([ChangeInfo.parse(c) for c in response])
+
+    @classmethod
+    def get_groups(cls, account_id='self'):
+        """Fetch Gerrit account groups
+
+        :param account_id: identifier that uniquely identifies one account
+        :type account: str
+        :rtype: tuple[GroupInfo]
+        :raise: PyCRError on any other error
+        """
+
+        cls.log.debug('List Gerrit account group')
+
+        try:
+            _, response = RequestFactory.get(accounts.groups(account_id))
+
+        except RequestError as why:
+            if why.status_code == 404:
+                raise QueryError('no such account')
+
+            raise UnexpectedError(why)
+
+        return tuple([GroupInfo.parse(g) for g in response])

@@ -558,6 +558,30 @@ class SshKeyInfo(Info):
         return key
 
 
+class GroupOptionsInfo(Info):
+    """A group options info object"""
+
+    def __init__(self):
+        self.visible_to_all = None
+
+    def tokenize(self):
+        pass  # ???(delay)
+
+    @staticmethod
+    def parse(data):
+        """Create an initialized GroupOptionsInfo object
+
+        :param data: JSON representation of the group optionsas emitted by
+            Gerrit
+        :type data: str
+        :rtype: GroupOptionsInfo
+        """
+
+        opt = GroupOptionsInfo()
+        opt.visible_to_all = data.get('visible_to_all', False)
+        return opt
+
+
 class GroupInfo(Info):
     """A group info object"""
 
@@ -596,7 +620,7 @@ class GroupInfo(Info):
         group.name = data.get('name')
 
         group.url = data.get('url')
-        group.options = data['options']
+        group.options = GroupOptionsInfo.parse(data['options'])
         group.description = data.get('description')
         group.group_id = data.get('group_id')
         group.owner = data.get('owner')
