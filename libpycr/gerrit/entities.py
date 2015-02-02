@@ -77,8 +77,8 @@ class AccountInfo(Info):
         account = AccountInfo()
 
         account.name = data['name']
-        account.email = data.get('email', None)
-        account.username = data.get('username', None)
+        account.email = data.get('email')
+        account.username = data.get('username')
 
         return account
 
@@ -163,7 +163,7 @@ class CommitInfo(Info):
 
         commit = CommitInfo()
 
-        commit.commit_id = data.get('commit', None)
+        commit.commit_id = data.get('commit')
         commit.subject = data['subject']
 
         if 'parent' in data:
@@ -176,7 +176,7 @@ class CommitInfo(Info):
         if 'committer' in data:
             commit.committer = GitPersonInfo.parse(data['committer'])
 
-        commit.message = data.get('message', None)
+        commit.message = data.get('message')
 
         return commit
 
@@ -271,8 +271,8 @@ class ChangeInfo(Info):
         change.subject = data['subject']
         change.owner = AccountInfo.parse(data['owner'])
 
-        change.status = data.get('status', None)
-        change.current_revision = data.get('current_revision', None)
+        change.status = data.get('status')
+        change.current_revision = data.get('current_revision')
 
         if 'revisions' in data:
             change.revisions = {}
@@ -552,7 +552,62 @@ class SshKeyInfo(Info):
         key.ssh_public_key = data['ssh_public_key']
         key.encoded_key = data['encoded_key']
         key.algorithm = data['algorithm']
-        key.comment = data.get('comment', None)
+        key.comment = data.get('comment')
         key.valid = data['valid']
 
         return key
+
+
+class GroupInfo(Info):
+    """A group info object"""
+
+    def __init__(self):
+        self.kind = None
+        self.uuid = None
+        self.name = None
+        self.url = None
+        self.options = None
+        self.description = None
+        self.group_id = None
+        self.owner = None
+        self.owner_id = None
+        self.members = None
+        self.includes = None
+
+    def tokenize(self):
+        pass  # ???(delay)
+
+    @staticmethod
+    def parse(data):
+        """Create an initialized GroupInfo object
+
+        :param data: JSON representation of the group as emitted by Gerrit
+        :type data: str
+        :rtype: GroupInfo
+        """
+
+        group = GroupInfo()
+        group.kind = data['kind']
+        group.uuid = data['id']
+
+        # Not set if returned in a map where the group name is used as map key.
+        # It is the caller responsibility to populate this field once the
+        # object is initialized.
+        group.name = data.get('name')
+
+        group.url = data.get('url')
+        group.options = data['options']
+        group.description = data.get('description')
+        group.group_id = data.get('group_id')
+        group.owner = data.get('owner')
+        group.owner_id = data.get('owner_id')
+
+        if 'members' in data:
+            group.members = tuple(
+                [AccountInfo.parse(m) for m in data['members']])
+
+        if 'includes' in data:
+            group.includes = tuple(
+                [GroupInfo.parse(g) for g in data['includes']])
+
+        return group
