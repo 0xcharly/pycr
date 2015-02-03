@@ -27,9 +27,12 @@ class Show(GerritAccountBuiltin):
     def parse_command_line(arguments):
         """Parse the SHOW command command-line arguments
 
+        Returns the account id that is provided on the command line. If no
+        account is provided, returns None.
+
         :param arguments: a list of command-line arguments to parse
         :type arguments: list[str]
-        :rtype: list[ChangeInfo]
+        :rtype: str
         """
 
         parser = argparse.ArgumentParser(description='Show account(s) details')
