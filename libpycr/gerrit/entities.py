@@ -549,10 +549,12 @@ class SshKeyInfo(Info):
 
         key = SshKeyInfo()
         key.seq = int(data['seq'])
-        key.ssh_public_key = data['ssh_public_key']
-        key.encoded_key = data['encoded_key']
-        key.algorithm = data['algorithm']
+        key.ssh_public_key = data['ssh_public_key'].strip()
+        key.encoded_key = data['encoded_key'].strip()
+        key.algorithm = data['algorithm'].strip()
         key.comment = data.get('comment')
+        if key.comment:
+            key.comment = key.comment.strip()
         key.valid = data['valid']
 
         return key

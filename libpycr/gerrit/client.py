@@ -535,6 +535,32 @@ class Gerrit(object):
         return tuple([SshKeyInfo.parse(k) for k in response])
 
     @classmethod
+    def get_ssh_key(cls, account_id='self', ssh_key_id='0'):
+        """Fetch Gerrit account SSH key
+
+        :param account_id: identifier that uniquely identifies one account
+        :type account: str
+        :param ssh_key_id: unique identifier to a SSH key
+        :type ssh_key_id: int
+        :rtype: SshKeyInfo
+        :raise: PyCRError on any other error
+        """
+
+        cls.log.debug('List Gerrit account SSH keys')
+
+        try:
+            _, response = RequestFactory.get(
+                accounts.ssh_key(account_id, ssh_key_id))
+
+        except RequestError as why:
+            if why.status_code == 404:
+                raise QueryError('no such account or ssh key')
+
+            raise UnexpectedError(why)
+
+        return SshKeyInfo.parse(response)
+
+    @classmethod
     def get_capabilities(cls, account_id='self'):
         """Fetch Gerrit account capabilities
 
