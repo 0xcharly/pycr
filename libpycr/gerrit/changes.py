@@ -53,7 +53,7 @@ def fetch_change_list(change_list):
         if CHANGE_ID.match(change) or LEGACY_CHANGE_ID.match(change):
             change_ids.append(change)
         elif LEGACY_CHANGE_ID_RANGE.match(change):
-            change_ids.extend(expand_change_range(change))
+            change_ids.extend([str(i) for i in expand_change_range(change)])
         else:
             warn('invalid Change-Id: %s' % change)
 
