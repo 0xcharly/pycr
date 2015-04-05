@@ -1,0 +1,6 @@
+[gerrit]
+host = https://review.gerrithub.io
+port = 29418
+project = JcDelay/pycr
+defaultbranch = master
+defaultremote = origin
