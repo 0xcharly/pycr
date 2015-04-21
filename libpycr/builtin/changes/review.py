@@ -40,10 +40,13 @@ class Review(GitClBuiltin):
             'score', help='the score of the review', default=None,
             choices=Gerrit.SCORES, nargs='?')
         parser.add_argument('-m', '--message', help='the review comment')
+        parser.add_argument(
+            '-l', '--label', default='Code-Review',
+            help='the label to score (default: Code-Review)')
 
         cmdline = parser.parse_args(arguments)
 
-        return cmdline.change_id, cmdline.score, cmdline.message
+        return cmdline.change_id, cmdline.score, cmdline.message, cmdline.label
 
     @staticmethod
     def tokenize(change, review):
@@ -68,7 +71,7 @@ class Review(GitClBuiltin):
             yield token
 
     def run(self, arguments, *args, **kwargs):
-        change_id, score, message = self.parse_command_line(arguments)
+        change_id, score, message, label = self.parse_command_line(arguments)
 
         try:
             change = Gerrit.get_change(change_id)
@@ -91,7 +94,7 @@ class Review(GitClBuiltin):
             if score is None:
                 score = ask('Please enter your review score', Gerrit.SCORES)
 
-            review = Gerrit.set_review(score, message, change.uuid)
+            review = Gerrit.set_review(score, message, change.uuid, label)
 
         except NoSuchChangeError as why:
             self.log.debug(str(why))

@@ -172,7 +172,8 @@ class Gerrit(object):
         return patch
 
     @classmethod
-    def set_review(cls, score, message, change_id, revision_id='current'):
+    def set_review(cls, score, message, change_id, label,
+                   revision_id='current'):
         """Set a review score
 
         Sends a POST request to Gerrit to review the given change.
@@ -184,6 +185,8 @@ class Gerrit(object):
         :param change_id: any identification number for the change (UUID,
             Change-Id, or legacy numeric change ID)
         :type change_id: str
+        :param label: the label to score
+        :type label: str
         :param revision_id: identifier that uniquely identifies one revision of
             a change (current, a commit ID (SHA1) or abbreviated commit ID, or
             a legacy numeric patch number)
@@ -195,13 +198,14 @@ class Gerrit(object):
 
         cls.log.debug('Set review: %s (revision: %s)', change_id, revision_id)
         cls.log.debug('Score:   %s', score)
+        cls.log.debug('Label:   %s', label)
         cls.log.debug('Message: %s', message)
 
         assert score in Gerrit.SCORES
 
         payload = {
             'message': message,
-            'labels': {'Code-Review': score}
+            'labels': {label: score}
         }
         headers = {'content-type': 'application/json'}
 
@@ -214,6 +218,10 @@ class Gerrit(object):
         except RequestError as why:
             if why.status_code == 404:
                 raise NoSuchChangeError(change_id)
+
+            if why.status_code == 400:
+                raise QueryError(
+                    'invalid score "%s" for label "%s"' % (score, label))
 
             raise UnexpectedError(why)
 

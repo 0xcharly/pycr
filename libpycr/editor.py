@@ -27,7 +27,7 @@ def strip_comments(data, line_comment='#'):
     """
 
     return '\n'.join([l for l in data.splitlines()
-                      if l[0] != line_comment]).strip()
+                      if l and l[0] != line_comment]).strip()
 
 
 def raw_input_editor(default=None):
