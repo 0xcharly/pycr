@@ -68,7 +68,7 @@ class Submit(GitClBuiltin):
             change = Gerrit.get_change(change_id)
 
             if not Gerrit.submit(change.uuid):
-                fail('submit could not be merged')
+                fail('change could not be merged')
 
         except NoSuchChangeError as why:
             self.log.debug(str(why))

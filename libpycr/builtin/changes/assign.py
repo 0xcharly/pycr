@@ -103,8 +103,8 @@ class Assign(GitClBuiltin):
         yield NEW_LINE
 
         if not added and not deleted:
-            yield Token.Text, ('# nothing to do ',
-                               '(reviewers list already up-to-date)')
+            yield Token.Text, (
+                '# nothing to do (reviewers list already up-to-date)')
             return
 
         yield Token.Text, '# Reviewers updated:'

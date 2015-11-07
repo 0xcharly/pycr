@@ -171,6 +171,14 @@ class RequestFactory(object):
         """
 
         cls.log.debug('Query URL: %s', endpoint)
+        if cls.log.isEnabledFor(logging.DEBUG) and 'data' in kwargs:
+            if ('headers' in kwargs and
+                    kwargs['headers'].get(
+                        'content-type', '').endswith('json')):
+                # Dump the JSON-encoded payload
+                data = json.loads(kwargs['data'])
+                cls.log.debug('JSON-encoded query payload')
+                cls.log.debug(json.dumps(data, indent=2))
 
         try:
             response = cls.get_session().request(method, endpoint, **kwargs)
@@ -217,6 +225,9 @@ class RequestFactory(object):
 
             json_response = response.text[len(GERRIT_MAGIC):]
             decoded = json.loads(json_response)
+            if cls.log.isEnabledFor(logging.DEBUG):
+                cls.log.debug('JSON-encoded server reply')
+                cls.log.debug(json.dumps(decoded, indent=2))
 
         else:
             decoded = None
