@@ -1,7 +1,7 @@
 PyCR
 ====
 
-A Command-Line Interface to Gerrit Code Review v2.8
+A Command-Line Interface to Gerrit Code Review v2.8 up to v2.11.4.
 
 Quick start
 -----------
@@ -10,10 +10,10 @@ Create a file named `~/.gitreview` with the following content:
 
      [gerrit]
      username = <your username>
-     password = <password>
+     password = <http-password>
      host = <review hostname>
 
-Where `<password>` is your HTTP access password for your account in Gerrit
+Where `<http-password>` is your HTTP access password for your account in Gerrit
 (Settings > HTTP Password).
 
 Then run:
