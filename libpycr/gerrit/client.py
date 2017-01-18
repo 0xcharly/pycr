@@ -540,7 +540,7 @@ class Gerrit(object):
 
             raise UnexpectedError(why)
 
-        return tuple([SshKeyInfo.parse(k) for k in response])
+        return tuple(SshKeyInfo.parse(k) for k in response)
 
     @classmethod
     def get_ssh_key(cls, account_id='self', ssh_key_id='0'):
@@ -637,7 +637,7 @@ class Gerrit(object):
 
             raise UnexpectedError(why)
 
-        return tuple([ChangeInfo.parse(c) for c in response])
+        return tuple(ChangeInfo.parse(c) for c in response)
 
     @classmethod
     def get_groups(cls, account_id='self'):
@@ -660,4 +660,4 @@ class Gerrit(object):
 
             raise UnexpectedError(why)
 
-        return tuple([GroupInfo.parse(g) for g in response])
+        return tuple(GroupInfo.parse(g) for g in response)
